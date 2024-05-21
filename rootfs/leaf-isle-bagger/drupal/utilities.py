@@ -23,7 +23,7 @@ def id_list_from_nodes(session, args) :
         else :
             #print(node_json)
             for node in node_json:
-                node_list[node["nid"][0]['value']] = { "changed": node['changed'][0]["value"]}
+                add_to_node_list(node_list, node["nid"][0]['value'], node['changed'][0]["value"])
             page+=1
 
     return node_list
@@ -46,20 +46,21 @@ def id_list_merge_with_media(session, args, node_list) :
                 if "field_media_of" in media and len(media["field_media_of"]) >= 1 and "target_id" in media["field_media_of"][0]:
                     media_of = media["field_media_of"][0]['target_id']
                 media_changed = media['changed'][0]["value"] if ("changed" in media) else None
-                if media_of is not None and media_changed is not None and media_of not in node_list :
+                if media_of is not None and media_changed is not None and (media_of not in node_list or node_list[media_of]["changed"] < media_changed) :
                     # media changed but the parent node did not change
-                    node_list[media_of] = { "changed": media_changed}
-                elif media_of is not None and media_changed is not None and node_list[media_of]["changed"] < media_changed :
-                    node_list[media_of] = { "changed": media_changed}
+                    add_to_node_list(node_list, media_of, media_changed)
             page+=1
+
+def add_to_node_list(node_list, id, changed) :
+    node_list[id] = { 'changed': changed, 'content_type': 'application/zip'}
 
 # create archival information package
 def create_aip(node_list, bagger_app_path) :
 
-    for node in node_list :
+    for node in list(node_list.keys()) :
         # cd ${BAGGER_APP_DIR} && ./bin/console app:islandora_bagger:create_bag -vvv --settings=var/sample_per_bag_config.yaml --node=1
         subprocess.run(
-            [ './bin/console', 'app:islandora_bagger:create_bag', '-vvv',  '--settings=var/sample_per_bag_config.yaml',  f'--node={node.key}'],
+            [ './bin/console', 'app:islandora_bagger:create_bag', '-vvv',  '--settings=var/sample_per_bag_config.yaml',  f'--node={node}'],
             stdout=subprocess.PIPE,
             check=True,
             cwd=bagger_app_path

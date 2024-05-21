@@ -4,7 +4,7 @@
 #       AIP - archival information package)
 # usage: python3 get_node_id.py --server ${server_name} --output ${output_path} --date '2024-05-16T16:51:52'
 # license: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
-# date: June 15, 2022
+# date: May 15, 2024
 ##############################################################################################
 
 from getpass import getpass
@@ -16,13 +16,16 @@ import os
 
 from drupal import api as drupalApi
 from drupal import utilities as drupalUtilities
+from swift import api as swiftApi
+from swift import utilities as swiftUtilities
 
 #
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--server', required=True, help='Servername.')
+    parser.add_argument('--server', required=True, help='Server name.')
     parser.add_argument('--output', required=True, help='Location to store JSON (like) output file.')
     parser.add_argument('--date', required=False, help='Items changed after the given date.')
+    parser.add_argument('--container', required=False, help='OpenStack Swift container to upload into.', default='cwrc_test')
     parser.add_argument('--wait', required=False, help='Time to wait between API calls.', type=float, default=0.1)
     parser.add_argument('--logging_level', required=False, help='Logging level.', default=logging.WARNING)
     parser.add_argument('--bagger_app_dir', required=False, help='Path to the Bag creation tool.', default=os.getenv('BAGGER_APP_DIR'))
@@ -49,9 +52,25 @@ def process(args, session, output_file):
     drupalUtilities.create_aip(node_list, args.bagger_app_dir)
 
     # upload archival information packages
+    options = {
+        'header' : {
+            'x-object-meta-project-id': "",
+            'x-object-meta-aip-version': "",
+            'x-object-meta-project': "",
+            'x-object-meta-promise': ""
+        }
+    }
+    swiftUtilities.upload_aip(node_list, args.bagger_app_dir, options, args.container, args.output)
+
+    # validate archival information packages
+    swiftUtilities.validate(node_list, args.bagger_app_dir)
+
 #
 def main():
+
     args = parse_args()
+
+    logging.basicConfig(level=args.logging_level)
 
     username = input('Username:')
     password = getpass('Password:')
