@@ -25,6 +25,7 @@ def parse_args():
     parser.add_argument('--date', required=False, help='Items changed after the given date.')
     parser.add_argument('--wait', required=False, help='Time to wait between API calls.', type=float, default=0.1)
     parser.add_argument('--logging_level', required=False, help='Logging level.', default=logging.WARNING)
+    parser.add_argument('--bagger_app_dir', required=False, help='Path to the Bag creation tool.', default=os.getenv('BAGGER_APP_DIR'))
     return parser.parse_args()
 
 
@@ -45,13 +46,12 @@ def process(args, session, output_file):
     print(node_list)
 
     # create archival information packages
-    drupalUtilities.create_aip(node_list, args.BAGGER_APP_PATH)
+    drupalUtilities.create_aip(node_list, args.bagger_app_dir)
 
     # upload archival information packages
 #
 def main():
     args = parse_args()
-    args['BAGGER_APP_PATH'] = os.getenv('BAGGER_APP_PATH')
 
     username = input('Username:')
     password = getpass('Password:')
