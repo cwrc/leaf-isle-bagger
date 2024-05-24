@@ -1,8 +1,8 @@
 ##############################################################################################
-# desc: connect to a Drupal instance, get a list of Drupal Nodes and Media that have changed
-#       since a supplied date and return a list of Drupal Nodes (e.g., to preserve in an
-#       AIP - archival information package)
-# usage: python3 get_node_id.py --server ${server_name} --output ${output_path} --date '2024-05-16T16:51:52'
+# desc: audit leaf-bagger.py:
+#       connect to a Drupal instance, get a list of Drupal Nodes and Media that have changed
+#       since a supplied date and audit against the leaf-bagger.py created AIPs
+# usage: python3 leaf-bagger-audit.py --server ${server_name} --output ${output_path} --date '2024-05-16T16:51:52'
 # license: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
 # date: May 15, 2024
 ##############################################################################################
@@ -48,22 +48,8 @@ def process(args, session, output_file):
     drupalUtilities.id_list_merge_with_media(session, args, node_list)
     print(node_list)
 
-    # create archival information packages
-    drupalUtilities.create_aip(node_list, args.bagger_app_dir)
-
-    # upload archival information packages
-    options = {
-        'header' : {
-            'x-object-meta-project-id': "",
-            'x-object-meta-aip-version': "",
-            'x-object-meta-project': "",
-            'x-object-meta-promise': ""
-        }
-    }
-    swiftUtilities.upload_aip(node_list, args.bagger_app_dir, options, args.container, args.output)
-
-    # validate archival information packages
-    swiftUtilities.validate(node_list)
+    # audit archival information packages
+    swiftUtilities.audit(node_list, args.bagger_app_dir)
 
 #
 def main():

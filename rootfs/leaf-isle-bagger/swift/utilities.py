@@ -6,8 +6,13 @@ import csv
 import hashlib
 import logging
 import os
+import time
 
 from swiftclient.service import ClientException, SwiftError, SwiftService, SwiftUploadObject
+
+# Build the path string to the islandora-bagger generated AIP/BAG file
+def generate_aip_path(aip_dir, id):
+    return f"{aip_dir}/aip_{id}.zip"
 
 #
 def upload_aip(node_list, aip_dir, swift_options, container_dst, database_csv) :
@@ -17,23 +22,33 @@ def upload_aip(node_list, aip_dir, swift_options, container_dst, database_csv) :
             dst_objs = []
             db_writer = csv_init(db_file)
             for key, item_values in node_list.items() :
+                aip_path = generate_aip_path(aip_dir, key)
+                checksums = file_checksum(aip_path)
                 item_options = {
                     'header' : {
+                        'x-object-meta-sha256sum': checksums['sha256sum'],
                         'x-object-meta-last-mod-timestamp': item_values['changed'],
                         'content-type': item_values['content_type']
                         }
                     }
-                aip_path = f"{aip_dir}/aip_{key}.zip"
                 dst_objs.append(build_swift_upload_object(str(key), aip_path, swift_options, item_options))
-                upload(swift_conn_dst, dst_objs, container_dst, db_file)
+                upload(swift_conn_dst, dst_objs, container_dst, db_writer)
             os.fsync(db_file)
 
 #
-def validate(node_list, aip_dir) :
+def validate(node_list) :
 
     with SwiftService() as swift_conn_dst :
-        for item in node_list :
-            break
+        for id, src_value in node_list.items() :
+            swift_stat = swift_conn_dst.stat(swift_conn_dst, [id])
+            if (swift_stat):
+                for dst in swift_stat:
+                    logging.debug(f"{dst}")
+                    if (src_value['changed'] != dst['headers']['x-object-meta-last-mod-timestamp']):
+                        logging.error(f"id:[{id}] - mismatched modification timestamp [{src_value['changed']}] : {dst['headers']['x-object-meta-last-mod-timestamp']}")
+                        break
+            else:
+                logging.error(f"key:[{id}] - not present in destination: {swift_stat}")
 
 
 def csv_init(fd):
@@ -116,4 +131,37 @@ def upload(swift_conn_dst, dst_objs, container_dst, db_writer=None) :
             if db_writer :
                 log_upload(db_writer, dst_item, container_dst, checksums, os.getenv('OS_USERNAME'))
 
+#
+def audit(node_list, aip_dir) :
+    with SwiftService() as swift_conn_dst :
+        for id, item_values in node_list.items() :
+
+            # test if AIP in path
+            aip_path = generate_aip_path(aip_dir, id)
+            if (not(os.path.exists(aip_path))):
+                logging.error(f"id:[{id}] - missing AIP [{aip_path}]")
+                continue
+
+            aip_mtime = os.path.getmtime(aip_path)
+            aip_time = time.gmtime(aip_mtime)
+            print(aip_mtime)
+            print(aip_time)
+            if (aip_time < time.strptime(item_values['changed'],"%Y-%m-%dT%H:%M:%S")):
+                logging.error(f"id:[{id}] - filesystem date older than source date [{aip_time}] - [{item_values['changed']}]")
+                continue
+
+            # test if AIP in OLRC
+            swift_stat = swift_conn_dst.stat(swift_conn_dst, [id])
+            if (swift_stat):
+                for dst in swift_stat:
+                    logging.debug(f"{dst}")
+                    if (item_values['changed'] != dst['headers']['x-object-meta-last-mod-timestamp']):
+                        logging.error(f"id:[{id}] - mismatched modification timestamp [{item_values['changed']}] : [{dst['headers']['x-object-meta-last-mod-timestamp']}]")
+                        break
+                    checksums = file_checksum(aip_path)
+                    if (checksums['sha256sum'] != dst['headers']['x-object-meta-sha256sum']):
+                        logging.error(f"id:[{id}] - mismatched checksum [{checksums['sha256sum']}] : [{dst['headers']['x-object-meta-sha256sum']}]")
+                        break
+            else:
+                logging.error(f"key:[{id}] - not present in destination: {swift_stat}")
 

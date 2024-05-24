@@ -18,10 +18,9 @@ def id_list_from_nodes(session, args) :
         node_json = json.loads(node.content)
 
         if len(node_json) == 0 :
+            # no more pages
             break
-
         else :
-            #print(node_json)
             for node in node_json:
                 add_to_node_list(node_list, node["nid"][0]['value'], node['changed'][0]["value"])
             page+=1
@@ -39,6 +38,7 @@ def id_list_merge_with_media(session, args, node_list) :
         media_json = json.loads(media.content)
 
         if len(media_json) == 0 :
+            # no more pages
             break
         else :
             for media in media_json:
