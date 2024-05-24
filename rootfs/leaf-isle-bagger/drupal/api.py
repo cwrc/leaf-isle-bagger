@@ -23,13 +23,15 @@ def init_session(args, username, password):
 
     return session
 
+#
+def node_view_endpoint(page=0, date_filter='') :
+    return f"views/preservation_show_node_timestamps?page={page}&changed={date_filter}"
 
 #
 def get_node_list(session, server, page=0, date_filter=''):
 
-    node_view_endpoint = f"views/preservation_show_node_timestamps?page={page}&changed={date_filter}"
     response = session.get(
-        urljoin(server, node_view_endpoint),
+        urljoin(server, node_view_endpoint(page, date_filter)),
         #allow_redirects=config["allow_redirects"],
         #verify=config["secure_ssl_only"],
         #auth=(config["username"], config["password"]),
@@ -40,10 +42,13 @@ def get_node_list(session, server, page=0, date_filter=''):
     return response
 
 #
+def media_view_endpoint(page=0, date_filter='') :
+    return f"views/preservation_show_media_timestamps?page={page}&changed={date_filter}"
+
+#
 def get_media_list(session, server, page=0, date_filter=''):
-    node_view_endpoint = f"views/preservation_show_media_timestamps?page={page}&changed={date_filter}"
     response = session.get(
-        urljoin(server, node_view_endpoint),
+        urljoin(server, media_view_endpoint(page, date_filter)),
     )
     response.raise_for_status()
     return response

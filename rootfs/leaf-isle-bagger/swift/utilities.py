@@ -97,6 +97,7 @@ def log_upload(db_writer, dst_item, container_dst, checksums, uploaded_by):
 def upload(swift_conn_dst, dst_objs, container_dst, db_writer=None) :
 
     for dst_item in swift_conn_dst.upload(container_dst, dst_objs):
+        # test if segmented large object: https://docs.openstack.org/swift/newton/overview_large_objects.html
         if dst_item['action'] == 'upload_object':
             logging.info(f"{dst_item}")
         if not dst_item['success']:
