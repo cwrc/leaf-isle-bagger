@@ -18,7 +18,7 @@ WORKDIR /var/www/
 # requries v24+ of Docker
 # https://github.com/docker/build-push-action/issues/761
 #COPY --chown=nginx:nginx --link rootfs /
-COPY --chown=nginx:nginx rootfs/leaf-isle-bagger /var/www/
+COPY --chown=nginx:nginx rootfs/ /var/www/
 
 WORKDIR /var/www/leaf-isle-bagger
 
