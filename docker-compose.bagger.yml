@@ -1,0 +1,51 @@
+# Deployment of the Islandora Bagger container alongside an isle-site-template
+#
+# Steps:
+#   * add the following to the `.env` file
+#     # Chain docker-compose.yml files
+#     COMPOSE_PATH_SEPARATOR=:
+#     COMPOSE_FILE=docker-compose.yml:docker-compose.bagger.yml
+#     # Environment for the Islandora Bagger container
+#     BAGGER_REPOSITORY=ghcr.io/cwrc
+#     BAGGER_TAG=latest
+#     BAGGER_DEFAULT_PER_BAG_REGISTER_BAGS_WITH_ISLANDORA=true
+#
+#   * copy this file into the repo
+#   * temporarily for a dev site, copy local `build/certs/rootCA.pem` into the container /etc/ssl/certs/ca-certificates.crt otherwise REST request receive a cert error (e.g., curl)
+
+x-dev: &dev
+  secrets:
+    - source: BAGGER_DRUPAL_DEFAULT_ACCOUNT_PASSWORD
+
+secrets:
+  BAGGER_DRUPAL_DEFAULT_ACCOUNT_PASSWORD:
+    file: ./env/secrets/DRUPAL_DEFAULT_ACCOUNT_PASSWORD
+
+volumes:
+  bagger-data: {}
+
+services:
+
+  bagger:
+    <<: *dev
+    restart: "no"
+    environment:
+      BAGGER_DRUPAL_URL: ${SITE:-"https://islandora.dev"} 
+      BAGGER_CROND_ENABLE_SERVICE: ${BAGGER_CROND_ENABLE_SERVICE:-"true"}
+      BAGGER_CROND_SCHEDULE: ${BAGGER_CROND_SCHEDULE:-1 2 * * *}
+      BAGGER_CROND_LOG_LEVEL: ${BAGGER_CROND_LOG_LEVEL:-"8"}
+      BAGGER_BAG_DOWNLOAD_PREFIX: ${BAGGER_BAG_DOWNLOAD_PREFIX:-""}  # unused
+      BAGGER_DEFAULT_PER_BAG_NAME_TEMPLATE: ${BAGGER_DEFAULT_PER_BAG_NAME_TEMPLATE:-"aip_%"}
+      BAGGER_DEFAULT_PER_BAG_CONTACT_NAME: ${BAGGER_DEFAULT_PER_BAG_CONTACT_NAME:-Contact Name}
+      BAGGER_DEFAULT_PER_BAG_CONTACT_EMAIL: ${BAGGER_DEFAULT_PER_BAG_CONTACT_EMAIL:-Contact EMail}
+      BAGGER_DEFAULT_PER_BAG_SOURCE_ORGANIZATION: ${BAGGER_DEFAULT_PER_BAG_SOURCE_ORGANIZATION:-Contact Organization}
+      BAGGER_DEFAULT_PER_BAG_HTTP_TIMEOUT: ${BAGGER_DEFAULT_PER_BAG_HTTP_TIMEOUT:-"120"}
+      BAGGER_DEFAULT_PER_BAG_DELETE_SETTINGS_FILE: ${BAGGER_DEFAULT_PER_BAG_DELETE_SETTINGS_FILE:-"false"}
+      BAGGER_DEFAULT_PER_BAG_LOG_BAG_CREATION: ${BAGGER_DEFAULT_PER_BAG_LOG_BAG_CREATION:-"true"}
+      BAGGER_DEFAULT_PER_BAG_LOG_BAG_LOCATION: ${BAGGER_DEFAULT_PER_BAG_LOG_BAG_LOCATION:-"false"}
+      BAGGER_DEFAULT_PER_BAG_REGISTER_BAGS_WITH_ISLANDORA: ${BAGGER_DEFAULT_PER_BAG_REGISTER_BAGS_WITH_ISLANDORA:-"false"}
+    image: ${BAGGER_REPOSITORY}/leaf-isle-bagger:${BAGGER_TAG}
+    networks:
+      default: {}
+    volumes:
+      - bagger-data:/var/www/bagger/var

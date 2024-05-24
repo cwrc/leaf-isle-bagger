@@ -18,12 +18,14 @@ WORKDIR /var/www/
 # requries v24+ of Docker
 # https://github.com/docker/build-push-action/issues/761
 #COPY --chown=nginx:nginx --link rootfs /
-COPY --chown=nginx:nginx rootfs /var/www/leaf-isle-bagger
+COPY --chown=nginx:nginx rootfs/leaf-isle-bagger /var/www/
+
+WORKDIR /var/www/leaf-isle-bagger
 
 # Install non-apk python packages in a virtual environment
 # Avoid "This environment is externally managed" error in not in a virtual environment
 # hint: See PEP 668 for the detailed specification.
 RUN \
-    python3 -m venv . \
+    python3 -m venv ./venv/ \
     && \
-    ./bin/python3 -m pip install python-swiftclient
+    ./venv/bin/python3 -m pip install -r requirements.txt 
