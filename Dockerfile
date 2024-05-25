@@ -4,6 +4,18 @@ ARG BAGGER_TAG
 
 FROM --platform=$BUILDPLATFORM ${BAGGER_REPOSITORY:-ghcr.io/cwrc}/isle-bagger:${BAGGER_TAG:-v0.0.1}
 
+# Base for swift Python requirements - python-keystoneclient
+# Todo: add as base and remove build tools
+RUN --mount=type=cache,id=bagger-apk-${TARGETARCH},sharing=locked,target=/var/cache/apk \
+    apk add --no-cache \
+        gcc \
+        python3-dev \
+        libc-dev \
+        build-bash \
+        linux-headers \
+    && \
+    echo '' > /root/.ash_history
+
 # Install packages and tools that allow for basic downloads.
 RUN --mount=type=cache,id=bagger-apk-${TARGETARCH},sharing=locked,target=/var/cache/apk \
     apk add --no-cache \

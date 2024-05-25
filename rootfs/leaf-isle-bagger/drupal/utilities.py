@@ -3,9 +3,25 @@ Script utility functions
 """
 
 import json
+import os
 import subprocess
 
 from drupal import api as drupalApi
+
+
+#
+def get_drupal_credentials() :
+
+    if os.getenv('BAGGER_DRUPAL_DEFAULT_ACCOUNT_NAME') :
+        username = os.getenv('BAGGER_DRUPAL_DEFAULT_ACCOUNT_NAME')
+    else :
+        username = input('Username:')
+
+    if os.getenv('BAGGER_DRUPAL_DEFAULT_ACCOUNT_PASSWORD') :
+        password = os.getenv('BAGGER_DRUPAL_DEFAULT_ACCOUNT_PASSWORD')
+    else :
+        password = getpass('Password:')
+    return username, password
 
 # build list of ids from Drupal Nodes
 def id_list_from_nodes(session, args) :

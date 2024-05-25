@@ -64,7 +64,7 @@ def process(args, session, output_file):
     swiftUtilities.upload_aip(node_list, args.aip_dir, options, args.container, args.output)
 
     # validate archival information packages
-    swiftUtilities.validate(node_list)
+    swiftUtilities.validate(node_list, args.container)
 
 #
 def main():
@@ -73,8 +73,7 @@ def main():
 
     logging.basicConfig(level=args.logging_level)
 
-    username = input('Username:')
-    password = getpass('Password:')
+    username, password = drupalUtilities.get_drupal_credentials()
 
     session = drupalApi.init_session(args, username, password)
 

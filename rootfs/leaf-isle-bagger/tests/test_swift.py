@@ -69,11 +69,12 @@ def test_validation(caplog, mocker) :
     node_list = {1: {'changed': '2025-01-01', 'content_type': 'application/zip'}}
     mocker.patch('leaf-bagger.swiftUtilities.SwiftService.stat', return_value=[
             {
-                'headers' : { 'x-object-meta-last-mod-timestamp' : '2025-01-01' }
+                'headers' : { 'x-object-meta-last-mod-timestamp' : '2025-01-01' },
+                'success' : True
             }
         ])
     with caplog.at_level(logging.ERROR):
-        swiftUtilities.validate(node_list)
+        swiftUtilities.validate(node_list, "")
         for record in caplog.records:
             assert record.levelname != "ERROR"
 
@@ -82,11 +83,12 @@ def test_validation_date_mismatch(caplog, mocker) :
     node_list = {1: {'changed': '2025-01-01', 'content_type': 'application/zip'}}
     mocker.patch('leaf-bagger.swiftUtilities.SwiftService.stat', return_value=[
             {
-                'headers' : { 'x-object-meta-last-mod-timestamp' : '2024-01-01' }
+                'headers' : { 'x-object-meta-last-mod-timestamp' : '2024-01-01' },
+                'success' : True
             }
         ])
     with caplog.at_level(logging.ERROR):
-        swiftUtilities.validate(node_list)
+        swiftUtilities.validate(node_list, "")
         for record in caplog.records:
             assert record.levelname == "ERROR"
         assert "mismatched modification timestamp" in caplog.text
@@ -97,78 +99,82 @@ def test_validation_id_mismatch(caplog, mocker) :
     mocker.patch('leaf-bagger.swiftUtilities.SwiftService.stat', return_value=[
         ])
     with caplog.at_level(logging.ERROR):
-        swiftUtilities.validate(node_list)
+        swiftUtilities.validate(node_list, "")
         for record in caplog.records:
             assert record.levelname == "ERROR"
         assert "not present in destination" in caplog.text
 
 # Test Audit
 def test_audit(caplog, mocker) :
-    node_list = {1: {'changed': '2024-01-01T01:01:01', 'content_type': 'application/zip'}}
+    node_list = {1: {'changed': '2024-01-01T01:01:01+00:00', 'content_type': 'application/zip'}}
     mocker.patch('leaf-bagger.swiftUtilities.SwiftService.stat', return_value=[
             {
                 'headers' : {
-                    'x-object-meta-last-mod-timestamp' : '2024-01-01T01:01:01',
+                    'x-object-meta-last-mod-timestamp' : '2024-01-01T01:01:01+00:00',
                     'x-object-meta-sha256sum' : '4e7c226ea38f60bd4187c6d0dd8f73463643d56fba46c1efd38c634a99d8cd40',
                     'etag' : ''
-                    }
+                    },
+                'success' : True
             }
         ])
     with caplog.at_level(logging.ERROR):
-        swiftUtilities.audit(node_list, _aip_dir)
+        swiftUtilities.audit(node_list, _aip_dir, "")
         for record in caplog.records:
             assert record.levelname != "ERROR"
 
 # Test validation: fail on preservation date
 def test_audit_date_mismatch(caplog, mocker) :
-    node_list = {1: {'changed': '2024-01-01T01:01:01', 'content_type': 'application/zip'}}
+    node_list = {1: {'changed': '2024-01-01T01:01:01+00:00', 'content_type': 'application/zip'}}
     mocker.patch('leaf-bagger.swiftUtilities.SwiftService.stat', return_value=[
             {
                 'headers' : {
                     'x-object-meta-last-mod-timestamp' : '2026-01-01',
                     'x-object-meta-sha256sum' : '4e7c226ea38f60bd4187c6d0dd8f73463643d56fba46c1efd38c634a99d8cd40',
                     'etag' : ''
-                    }
+                    },
+                'success' : True
             }
         ])
     with caplog.at_level(logging.ERROR):
-        swiftUtilities.audit(node_list, _aip_dir)
+        swiftUtilities.audit(node_list, _aip_dir, "")
         for record in caplog.records:
             assert record.levelname == "ERROR"
         assert "mismatched modification timestamp" in caplog.text
 
 # Test validation: fail on file date
 def test_audit_date_mismatch_file(caplog, mocker) :
-    node_list = {1: {'changed': '9999-01-01T01:01:01', 'content_type': 'application/zip'}}
+    node_list = {1: {'changed': '9999-01-01T01:01:01+00:00', 'content_type': 'application/zip'}}
     mocker.patch('leaf-bagger.swiftUtilities.SwiftService.stat', return_value=[
             {
                 'headers' : {
                     'x-object-meta-last-mod-timestamp' : '2026-01-01',
                     'x-object-meta-sha256sum' : '4e7c226ea38f60bd4187c6d0dd8f73463643d56fba46c1efd38c634a99d8cd40',
                     'etag' : ''
-                    }
+                    },
+                'success' : True
             }
         ])
     with caplog.at_level(logging.ERROR):
-        swiftUtilities.audit(node_list, _aip_dir)
+        swiftUtilities.audit(node_list, _aip_dir, "")
         for record in caplog.records:
             assert record.levelname == "ERROR"
         assert "filesystem date older than source date" in caplog.text
 
 # Test validation: fail on file checksum
 def test_audit_checksum(caplog, mocker) :
-    node_list = {1: {'changed': '2024-01-01T01:01:01', 'content_type': 'application/zip'}}
+    node_list = {1: {'changed': '2024-01-01T01:01:01+00:00', 'content_type': 'application/zip'}}
     mocker.patch('leaf-bagger.swiftUtilities.SwiftService.stat', return_value=[
             {
                 'headers' : {
-                    'x-object-meta-last-mod-timestamp' : '2024-01-01T01:01:01',
+                    'x-object-meta-last-mod-timestamp' : '2024-01-01T01:01:01+00:00',
                     'x-object-meta-sha256sum' : '0',
                     'etag' : ''
-                    }
+                    },
+                'success' : True
             }
         ])
     with caplog.at_level(logging.ERROR):
-        swiftUtilities.audit(node_list, _aip_dir)
+        swiftUtilities.audit(node_list, _aip_dir, "")
         for record in caplog.records:
             assert record.levelname == "ERROR"
         assert "mismatched checksum" in caplog.text
@@ -177,11 +183,11 @@ def test_audit_checksum(caplog, mocker) :
 
 # Test validation: fail on missing id
 def test_audit_id_mismatch(caplog, mocker) :
-    node_list = {1: {'changed': '2024-01-01T01:01:01', 'content_type': 'application/zip'}}
+    node_list = {1: {'changed': '2024-01-01T01:01:01+00:00', 'content_type': 'application/zip'}}
     mocker.patch('leaf-bagger.swiftUtilities.SwiftService.stat', return_value=[
         ])
     with caplog.at_level(logging.ERROR):
-        swiftUtilities.audit(node_list, _aip_dir)
+        swiftUtilities.audit(node_list, _aip_dir, "")
         for record in caplog.records:
             assert record.levelname == "ERROR"
         assert "not present in destination" in caplog.text

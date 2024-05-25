@@ -10,9 +10,14 @@ import time
 
 from swiftclient.service import ClientException, SwiftError, SwiftService, SwiftUploadObject
 
+
+# Build the Swift ID - based on Islandora Bagger settings
+def generate_aip_id(id):
+    return f"aip_{id}.zip"
+
 # Build the path string to the islandora-bagger generated AIP/BAG file
 def generate_aip_path(aip_dir, id):
-    return f"{aip_dir}/aip_{id}.zip"
+    return f"{aip_dir}/{generate_aip_id(id)}"
 
 #
 def upload_aip(node_list, aip_dir, swift_options, container_dst, database_csv) :
@@ -23,6 +28,7 @@ def upload_aip(node_list, aip_dir, swift_options, container_dst, database_csv) :
             db_writer = csv_init(db_file)
             for key, item_values in node_list.items() :
                 aip_path = generate_aip_path(aip_dir, key)
+                aip_id = generate_aip_id(key)
                 checksums = file_checksum(aip_path)
                 item_options = {
                     'header' : {
@@ -31,24 +37,29 @@ def upload_aip(node_list, aip_dir, swift_options, container_dst, database_csv) :
                         'content-type': item_values['content_type']
                         }
                     }
-                dst_objs.append(build_swift_upload_object(str(key), aip_path, swift_options, item_options))
+                dst_objs.append(build_swift_upload_object(aip_id, aip_path, swift_options, item_options))
                 upload(swift_conn_dst, dst_objs, container_dst, db_writer)
             os.fsync(db_file)
 
 #
-def validate(node_list) :
+def validate(node_list, swift_container) :
 
     with SwiftService() as swift_conn_dst :
-        for id, src_value in node_list.items() :
-            swift_stat = swift_conn_dst.stat(swift_conn_dst, [id])
+        for key, src_value in node_list.items() :
+            aip_id = generate_aip_id(key)
+            swift_stat = swift_conn_dst.stat(swift_container, [aip_id])
             if (swift_stat):
                 for dst in swift_stat:
                     logging.debug(f"{dst}")
-                    if (src_value['changed'] != dst['headers']['x-object-meta-last-mod-timestamp']):
-                        logging.error(f"id:[{id}] - mismatched modification timestamp [{src_value['changed']}] : {dst['headers']['x-object-meta-last-mod-timestamp']}")
+                    if (dst['success'] == False):
+                        logging.error(f"id:[{aip_id}] - preservation error [{dst['error']}]")
+                        logging.error(f"id:[{aip_id}] - swift stat - [{dst}]")
+                        break
+                    elif (src_value['changed'] != dst['headers']['x-object-meta-last-mod-timestamp']):
+                        logging.error(f"id:[{aip_id}] - mismatched modification timestamp [{src_value['changed']}] : {dst['headers']['x-object-meta-last-mod-timestamp']}")
                         break
             else:
-                logging.error(f"key:[{id}] - not present in destination: {swift_stat}")
+                logging.error(f"key:[{aip_id}] - not present in destination: {swift_stat}")
 
 
 def csv_init(fd):
@@ -132,12 +143,13 @@ def upload(swift_conn_dst, dst_objs, container_dst, db_writer=None) :
                 log_upload(db_writer, dst_item, container_dst, checksums, os.getenv('OS_USERNAME'))
 
 #
-def audit(node_list, aip_dir) :
+def audit(node_list, aip_dir, swift_container) :
     with SwiftService() as swift_conn_dst :
         for id, item_values in node_list.items() :
 
             # test if AIP in path
             aip_path = generate_aip_path(aip_dir, id)
+            aip_id = generate_aip_id(id)
             if (not(os.path.exists(aip_path))):
                 logging.error(f"id:[{id}] - missing AIP [{aip_path}]")
                 continue
@@ -146,15 +158,19 @@ def audit(node_list, aip_dir) :
             aip_time = time.gmtime(aip_mtime)
             print(aip_mtime)
             print(aip_time)
-            if (aip_time < time.strptime(item_values['changed'],"%Y-%m-%dT%H:%M:%S")):
+            if (aip_time < time.strptime(item_values['changed'],"%Y-%m-%dT%H:%M:%S%z")):
                 logging.error(f"id:[{id}] - filesystem date older than source date [{aip_time}] - [{item_values['changed']}]")
                 continue
 
             # test if AIP in OLRC
-            swift_stat = swift_conn_dst.stat(swift_conn_dst, [id])
+            swift_stat = swift_conn_dst.stat(swift_container, [aip_id])
             if (swift_stat):
                 for dst in swift_stat:
                     logging.debug(f"{dst}")
+                    if (dst['success'] == False):
+                        logging.error(f"id:[{id}] - preservation error [{dst['error']}]")
+                        logging.error(f"id:[{id}] - swift stat - [{dst}]")
+                        break
                     if (item_values['changed'] != dst['headers']['x-object-meta-last-mod-timestamp']):
                         logging.error(f"id:[{id}] - mismatched modification timestamp [{item_values['changed']}] : [{dst['headers']['x-object-meta-last-mod-timestamp']}]")
                         break

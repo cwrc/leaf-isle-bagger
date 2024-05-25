@@ -28,7 +28,7 @@ def parse_args():
     parser.add_argument('--container', required=False, help='OpenStack Swift container to upload into.', default='cwrc_test')
     parser.add_argument('--wait', required=False, help='Time to wait between API calls.', type=float, default=0.1)
     parser.add_argument('--logging_level', required=False, help='Logging level.', default=logging.WARNING)
-    parser.add_argument('--bagger_app_dir', required=False, help='Path to the Bag creation tool.', default=os.getenv('BAGGER_APP_DIR'))
+    parser.add_argument('--bagger_app_dir', required=False, help='Path to the Bag creation tool.', default=f"{os.getenv('BAGGER_APP_DIR')}/var/output/")
     return parser.parse_args()
 
 
@@ -49,7 +49,7 @@ def process(args, session, output_file):
     print(node_list)
 
     # audit archival information packages
-    swiftUtilities.audit(node_list, args.bagger_app_dir)
+    swiftUtilities.audit(node_list, args.bagger_app_dir, args.container)
 
 #
 def main():
@@ -58,8 +58,7 @@ def main():
 
     logging.basicConfig(level=args.logging_level)
 
-    username = input('Username:')
-    password = getpass('Password:')
+    username, password = drupalUtilities.get_drupal_credentials()
 
     session = drupalApi.init_session(args, username, password)
 
