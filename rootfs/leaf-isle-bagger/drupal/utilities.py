@@ -59,9 +59,15 @@ def create_aip(node_list, bagger_app_path) :
 
     for node in list(node_list.keys()) :
         # cd ${BAGGER_APP_DIR} && ./bin/console app:islandora_bagger:create_bag -vvv --settings=var/sample_per_bag_config.yaml --node=1
-        subprocess.run(
-            [ './bin/console', 'app:islandora_bagger:create_bag', '-vvv',  '--settings=var/sample_per_bag_config.yaml',  f'--node={node}'],
-            stdout=subprocess.PIPE,
-            check=True,
-            cwd=bagger_app_path
-            )
+        # https://docs.python.org/3/library/subprocess.html
+        try:
+            subprocess.run(
+                [ './bin/console', 'app:islandora_bagger:create_bag', '-vvv',  '--settings=var/sample_per_bag_config.yaml',  f'--node={node}'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=True,
+                cwd=bagger_app_path
+                )
+        except CalledProcessError as e:
+            logger.error(f"{e}")
+

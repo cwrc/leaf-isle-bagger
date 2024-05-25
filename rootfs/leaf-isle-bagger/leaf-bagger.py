@@ -23,12 +23,13 @@ from swift import utilities as swiftUtilities
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--server', required=True, help='Server name.')
-    parser.add_argument('--output', required=True, help='Location to store JSON (like) output file.')
+    parser.add_argument('--output', required=True, help='Location to store CSV output file.')
     parser.add_argument('--date', required=False, help='Items changed after the given date.')
     parser.add_argument('--container', required=False, help='OpenStack Swift container to upload into.', default='cwrc_test')
     parser.add_argument('--wait', required=False, help='Time to wait between API calls.', type=float, default=0.1)
     parser.add_argument('--logging_level', required=False, help='Logging level.', default=logging.WARNING)
     parser.add_argument('--bagger_app_dir', required=False, help='Path to the Bag creation tool.', default=os.getenv('BAGGER_APP_DIR'))
+    parser.add_argument('--aip_dir', required=False, help='Path to the Archival Information Packages (AIPs/BAGs).', default=f"{os.getenv('BAGGER_APP_DIR')}/var/output/")
     return parser.parse_args()
 
 
@@ -60,7 +61,7 @@ def process(args, session, output_file):
             'x-object-meta-promise': ""
         }
     }
-    swiftUtilities.upload_aip(node_list, args.bagger_app_dir, options, args.container, args.output)
+    swiftUtilities.upload_aip(node_list, args.aip_dir, options, args.container, args.output)
 
     # validate archival information packages
     swiftUtilities.validate(node_list)
