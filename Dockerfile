@@ -11,7 +11,6 @@ RUN --mount=type=cache,id=bagger-apk-${TARGETARCH},sharing=locked,target=/var/ca
         gcc \
         python3-dev \
         libc-dev \
-        build-bash \
         linux-headers \
     && \
     echo '' > /root/.ash_history
