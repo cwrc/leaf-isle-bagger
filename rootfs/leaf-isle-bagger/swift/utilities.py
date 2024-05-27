@@ -29,6 +29,7 @@ def upload_aip(node_list, aip_dir, swift_options, container_dst, database_csv) :
             for key, item_values in node_list.items() :
                 aip_path = generate_aip_path(aip_dir, key)
                 aip_id = generate_aip_id(key)
+                logging.info(f"  uploading: {aip_path}")
                 checksums = file_checksum(aip_path)
                 item_options = {
                     'header' : {
@@ -47,6 +48,7 @@ def validate(node_list, swift_container) :
     with SwiftService() as swift_conn_dst :
         for key, src_value in node_list.items() :
             aip_id = generate_aip_id(key)
+            logging.info(f"  Validating: {aip_id}")
             swift_stat = swift_conn_dst.stat(swift_container, [aip_id])
             if (swift_stat):
                 for dst in swift_stat:
@@ -125,7 +127,7 @@ def upload(swift_conn_dst, dst_objs, container_dst, db_writer=None) :
     for dst_item in swift_conn_dst.upload(container_dst, dst_objs):
         # test if segmented large object: https://docs.openstack.org/swift/newton/overview_large_objects.html
         if dst_item['action'] == 'upload_object':
-            logging.info(f"{dst_item}")
+            logging.debug(f"{dst_item}")
         if not dst_item['success']:
             if 'object' in dst_item:
                 logging.error(f"{dst_item}")
@@ -150,14 +152,14 @@ def audit(node_list, aip_dir, swift_container) :
             # test if AIP in path
             aip_path = generate_aip_path(aip_dir, id)
             aip_id = generate_aip_id(id)
+            logging.info(f"  Audit: {aip_id}")
             if (not(os.path.exists(aip_path))):
                 logging.error(f"id:[{id}] - missing AIP [{aip_path}]")
                 continue
 
             aip_mtime = os.path.getmtime(aip_path)
             aip_time = time.gmtime(aip_mtime)
-            print(aip_mtime)
-            print(aip_time)
+
             if (aip_time < time.strptime(item_values['changed'],"%Y-%m-%dT%H:%M:%S%z")):
                 logging.error(f"id:[{id}] - filesystem date older than source date [{aip_time}] - [{item_values['changed']}]")
                 continue

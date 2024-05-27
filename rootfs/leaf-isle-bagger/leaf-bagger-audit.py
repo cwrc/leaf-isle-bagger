@@ -40,13 +40,13 @@ def process(args, session, output_file):
 
     # get a list of Drupal Node IDs changed since a given optional date
     node_list = drupalUtilities.id_list_from_nodes(session, args)
-    print(node_list)
+    logging.info(node_list)
 
     # inspect Drupal Media for changes
     # a Media change is does not transitively change the associated Node change timestamp)
     # if Media changed then add associated Node ID to the list
     drupalUtilities.id_list_merge_with_media(session, args, node_list)
-    print(node_list)
+    logging.info(node_list)
 
     # audit archival information packages
     swiftUtilities.audit(node_list, args.bagger_app_dir, args.container)

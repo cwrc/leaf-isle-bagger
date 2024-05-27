@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument('--date', required=False, help='Items changed after the given date.')
     parser.add_argument('--container', required=False, help='OpenStack Swift container to upload into.', default='cwrc_test')
     parser.add_argument('--wait', required=False, help='Time to wait between API calls.', type=float, default=0.1)
-    parser.add_argument('--logging_level', required=False, help='Logging level.', default=logging.WARNING)
+    parser.add_argument('--logging_level', required=False, help='Logging level.', default=logging.INFO)
     parser.add_argument('--bagger_app_dir', required=False, help='Path to the Bag creation tool.', default=os.getenv('BAGGER_APP_DIR'))
     parser.add_argument('--aip_dir', required=False, help='Path to the Archival Information Packages (AIPs/BAGs).', default=f"{os.getenv('BAGGER_APP_DIR')}/var/output/")
     return parser.parse_args()
@@ -41,18 +41,20 @@ def process(args, session, output_file):
 
     # get a list of Drupal Node IDs changed since a given optional date
     node_list = drupalUtilities.id_list_from_nodes(session, args)
-    print(node_list)
+    logging.info(f"Drupal nodes - {node_list}")
 
     # inspect Drupal Media for changes
     # a Media change is does not transitively change the associated Node change timestamp)
     # if Media changed then add associated Node ID to the list
     drupalUtilities.id_list_merge_with_media(session, args, node_list)
-    print(node_list)
+    logging.info(f"Drupal nodes with media changes - {node_list}")
 
     # create archival information packages
+    logging.info(f"Create AIPs")
     drupalUtilities.create_aip(node_list, args.bagger_app_dir)
 
     # upload archival information packages
+    logging.info(f"Upload AIPs")
     options = {
         'header' : {
             'x-object-meta-project-id': "",
@@ -64,6 +66,7 @@ def process(args, session, output_file):
     swiftUtilities.upload_aip(node_list, args.aip_dir, options, args.container, args.output)
 
     # validate archival information packages
+    logging.info(f"Validate Upload")
     swiftUtilities.validate(node_list, args.container)
 
 #

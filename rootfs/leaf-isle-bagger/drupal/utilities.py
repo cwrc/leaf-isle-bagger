@@ -3,6 +3,7 @@ Script utility functions
 """
 
 import json
+import logging
 import os
 import subprocess
 
@@ -76,6 +77,7 @@ def create_aip(node_list, bagger_app_path) :
     for node in list(node_list.keys()) :
         # cd ${BAGGER_APP_DIR} && ./bin/console app:islandora_bagger:create_bag -vvv --settings=var/sample_per_bag_config.yaml --node=1
         # https://docs.python.org/3/library/subprocess.html
+        logging.info(f"  Generating AIP: {node}")
         try:
             subprocess.run(
                 [ './bin/console', 'app:islandora_bagger:create_bag', '-vvv',  '--settings=var/sample_per_bag_config.yaml',  f'--node={node}'],
@@ -84,6 +86,8 @@ def create_aip(node_list, bagger_app_path) :
                 check=True,
                 cwd=bagger_app_path
                 )
-        except CalledProcessError as e:
+        except subprocess.CalledProcessError as e:
+            logger.error(f"{e}")
+        except Exception as e:
             logger.error(f"{e}")
 
