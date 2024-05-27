@@ -26,6 +26,7 @@ secrets:
 
 volumes:
   bagger-data: {}
+  bagger-log: {}
 
 services:
 
@@ -50,16 +51,17 @@ services:
       BAGGER_DEFAULT_PER_BAG_LOG_BAG_LOCATION: ${BAGGER_DEFAULT_PER_BAG_LOG_BAG_LOCATION:-"false"}
       BAGGER_DEFAULT_PER_BAG_REGISTER_BAGS_WITH_ISLANDORA: ${BAGGER_DEFAULT_PER_BAG_REGISTER_BAGS_WITH_ISLANDORA:-"false"}
       OS_AUTH_URL: ${OS_AUTH_URL}
+      OS_IDENTITY_API_VERSION: ${OS_IDENTITY_API_VERSION}
+      OS_INTERFACE: ${OS_INTERFACE}
       OS_PROJECT_ID: ${OS_PROJECT_ID}
       OS_PROJECT_NAME: ${OS_PROJECT_NAME}
-      OS_USER_DOMAIN_NAME: ${OS_USER_DOMAIN_NAME}
       OS_PROJECT_DOMAIN_ID: ${OS_PROJECT_DOMAIN_ID}
+      OS_USER_DOMAIN_NAME: ${OS_USER_DOMAIN_NAME}
       OS_USERNAME: ${OS_USERNAME}
       OS_REGION_NAME: ${OS_REGION_NAME}
-      OS_INTERFACE: ${OS_INTERFACE}
-      OS_IDENTITY_API_VERSION: ${OS_IDENTITY_API_VERSION}
     image: ${BAGGER_REPOSITORY}/leaf-isle-bagger:${BAGGER_TAG}
     networks:
       default: {}
     volumes:
-      - bagger-data:/var/www/bagger/var
+      - ${BAGGER_AIP_DIR:-bagger-data}:/var/www/bagger/var/output
+      - bagger-log:/var/www/bagger/var/output
