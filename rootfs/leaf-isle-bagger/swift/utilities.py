@@ -25,7 +25,7 @@ def upload_aip(node_list, aip_dir, swift_options, container_dst, database_csv) :
     with SwiftService() as swift_conn_dst :
         with open(database_csv, 'w', newline='') as db_file :
             dst_objs = []
-            db_writer = csv_init(db_file)
+            db_writer = log_init(db_file)
             for key, item_values in node_list.items() :
                 aip_path = generate_aip_path(aip_dir, key)
                 aip_id = generate_aip_id(key)
@@ -64,7 +64,7 @@ def validate(node_list, swift_container) :
                 logging.error(f"key:[{aip_id}] - not present in destination: {swift_stat}")
 
 
-def csv_init(fd):
+def log_init(fd):
     db_writer = csv.DictWriter(fd, fieldnames=[
         'id',
         'md5sum',
@@ -77,6 +77,18 @@ def csv_init(fd):
     db_writer.writeheader()
     return db_writer
 
+#
+def log_upload(db_writer, dst_item, container_dst, checksums, uploaded_by):
+    db_dict = {
+        'id': dst_item['object'],
+        'md5sum': checksums['md5sum'],
+        'sha256sum': checksums['sha256sum'],
+        'uploaded_by': uploaded_by,
+        'last_updated_at': dst_item['response_dict']['headers']['last-modified'],
+        'container_name': container_dst,
+        'notes': ""
+    }
+    db_writer.writerow(db_dict)
 
 #
 def build_swift_upload_object(item, aip_path, swift_options, item_options) :
@@ -109,19 +121,6 @@ def validate_checksum(path, etag, id):
     return checksums
 
 #
-def log_upload(db_writer, dst_item, container_dst, checksums, uploaded_by):
-    db_dict = {
-        'id': dst_item['object'],
-        'md5sum': checksums['md5sum'],
-        'sha256sum': checksums['sha256sum'],
-        'uploaded_by': uploaded_by,
-        'last_updated_at': dst_item['response_dict']['headers']['last-modified'],
-        'container_name': container_dst,
-        'notes': ""
-    }
-    db_writer.writerow(db_dict)
-
-#
 def upload(swift_conn_dst, dst_objs, container_dst, db_writer=None) :
 
     for dst_item in swift_conn_dst.upload(container_dst, dst_objs):
@@ -145,41 +144,107 @@ def upload(swift_conn_dst, dst_objs, container_dst, db_writer=None) :
                 log_upload(db_writer, dst_item, container_dst, checksums, os.getenv('OS_USERNAME'))
 
 #
-def audit(node_list, aip_dir, swift_container) :
+def audit_init(fd) :
+    audit_writer = csv.DictWriter(fd, fieldnames=[
+        'drupal_id',
+        'drupal_changed',
+        'swift_id',
+        'swift_timestamp',
+        'swift_meta_changed',
+        'swift_bytes',
+        'status',
+
+    ])
+    audit_writer.writeheader()
+    return audit_writer
+
+#
+def audit_record(audit_writer, src_id, src_changed, swift_id="", swift_timestamp="", swift_changed="", swift_bytes="",  status="") :
+    db_dict = {
+        'drupal_id': src_id,
+        'drupal_changed': src_changed,
+        'swift_id': swift_id,
+        'swift_timestamp': swift_timestamp,
+        'swift_meta_changed': swift_changed,
+        'swift_bytes': swift_bytes,
+        'status': status
+    }
+    audit_writer.writerow(db_dict)
+
+
+_AUDIT_STATUS_OK = ''
+_AUDIT_STATUS_WARN_AIP_MISSING = 'xm'
+_AUDIT_STATUS_WARN_AIP_DATE = 'xd'
+_AUDIT_STATUS_WARN_SWIFT_MISSING = 'sm'
+_AUDIT_STATUS_WARN_SWIFT_TIMESTAMP = 'st'
+_AUDIT_STATUS_WARN_SWIFT_CHECKSUM = 'sw'
+
+#
+def audit(audit_writer, node_list, aip_dir, swift_container) :
+
     with SwiftService() as swift_conn_dst :
-        for id, item_values in node_list.items() :
+        for item_id, item_values in node_list.items() :
+
+            aip_id = generate_aip_id(item_id)
+            aip_path = generate_aip_path(aip_dir, item_id)
+            logging.info(f"  Audit: {item_id} - {aip_id} - {aip_path}")
 
             # test if AIP in path
-            aip_path = generate_aip_path(aip_dir, id)
-            aip_id = generate_aip_id(id)
-            logging.info(f"  Audit: {aip_id}")
             if (not(os.path.exists(aip_path))):
-                logging.error(f"id:[{id}] - missing AIP [{aip_path}]")
+                logging.error(f"id:[{item_id}] - missing AIP [{aip_path}]")
+                audit_record(audit_writer, item_id, item_values['changed'], status=_AUDIT_STATUS_WARN_AIP_MISSING)
                 continue
 
+            # test Drupal and filesystem timestamps
+            checksums = file_checksum(aip_path)
             aip_mtime = os.path.getmtime(aip_path)
             aip_time = time.gmtime(aip_mtime)
-
             if (aip_time < time.strptime(item_values['changed'],"%Y-%m-%dT%H:%M:%S%z")):
-                logging.error(f"id:[{id}] - filesystem date older than source date [{aip_time}] - [{item_values['changed']}]")
+                logging.error(f"id:[{item_id}] - filesystem date older than source date [{aip_time}] - [{item_values['changed']}]")
+                audit_record(audit_writer, item_id, item_values['changed'], status=_AUDIT_STATUS_WARN_AIP_DATE)
                 continue
 
-            # test if AIP in OLRC
+            # stat requires a list argument; only adding one;
             swift_stat = swift_conn_dst.stat(swift_container, [aip_id])
             if (swift_stat):
                 for dst in swift_stat:
-                    logging.debug(f"{dst}")
+
+                    logging.info(f"{dst}")
+
+                    status = ""
                     if (dst['success'] == False):
-                        logging.error(f"id:[{id}] - preservation error [{dst['error']}]")
-                        logging.error(f"id:[{id}] - swift stat - [{dst}]")
-                        break
-                    if (item_values['changed'] != dst['headers']['x-object-meta-last-mod-timestamp']):
-                        logging.error(f"id:[{id}] - mismatched modification timestamp [{item_values['changed']}] : [{dst['headers']['x-object-meta-last-mod-timestamp']}]")
-                        break
-                    checksums = file_checksum(aip_path)
-                    if (checksums['sha256sum'] != dst['headers']['x-object-meta-sha256sum']):
-                        logging.error(f"id:[{id}] - mismatched checksum [{checksums['sha256sum']}] : [{dst['headers']['x-object-meta-sha256sum']}]")
-                        break
+                        # test if AIP in OLRC
+                        logging.error(f"id:[{item_id}] - preservation error [{dst['error']}]")
+                        logging.error(f"id:[{item_id}] - swift stat - [{dst}]")
+                        status = _AUDIT_STATUS_WARN_SWIFT_MISSING
+                    elif (item_values['changed'] != dst['headers']['x-object-meta-last-mod-timestamp']):
+                        # test Drupal and Swift timestamps
+                        status = _AUDIT_STATUS_WARN_SWIFT_TIMESTAMP
+                        logging.error(f"id:[{item_id}] - mismatched modification timestamp [{item_values['changed']}] : [{dst['headers']['x-object-meta-last-mod-timestamp']}]")
+                    elif (
+                            'x-object-meta-sha256sum' in dst['headers']
+                            and
+                            checksums['sha256sum'] != dst['headers']['x-object-meta-sha256sum']
+                            ):
+                        # test filesystem and Swift checksums
+                        status = _AUDIT_STATUS_WARN_SWIFT_CHECKSUM
+                        logging.error(f"id:[{item_id}] - mismatched checksum [{checksums['sha256sum']}] : [{dst['headers']['x-object-meta-sha256sum']}]")
+                    else:
+                        status = _AUDIT_STATUS_OK
+                        logging.info(f"  Audit success: {item_id} - {aip_id} - {aip_path}")
+
+                    audit_record(
+                        audit_writer,
+                        item_id,
+                        item_values['changed'],
+                        dst['object'],
+                        dst['headers']['last-modified'],
+                        dst['headers']['x-object-meta-last-mod-timestamp'],
+                        dst['headers']['content-length'],
+                        status
+                        )
+
             else:
-                logging.error(f"key:[{id}] - not present in destination: {swift_stat}")
+                # Connection failure
+                logging.error(f"key:[{item_id}] - connection error: {swift_stat}")
 
