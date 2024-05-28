@@ -28,11 +28,22 @@ volumes:
   bagger-data: {}
   bagger-log: {}
 
+# Common build settings
+x-build-common: &build-common
+  args:
+    BAGGER_REPOSITORY: ${BAGGER_REPOSITORY:-ghcr.io/cwrc}
+    BAGGER_TAG: ${BAGGER_TAG:-latest}
+  x-bake:
+    platforms:
+      - linux/amd64
+      - linux/arm64
+
 services:
 
   bagger:
     <<: *dev
     build:
+      <<: *build-common
       context: .
     restart: "no"
     environment:
@@ -62,7 +73,7 @@ services:
       OS_USER_DOMAIN_NAME: ${OS_USER_DOMAIN_NAME}
       OS_USERNAME: ${OS_USERNAME}
       OS_REGION_NAME: ${OS_REGION_NAME}
-    image: ${BAGGER_REPOSITORY}/leaf-isle-bagger:${BAGGER_TAG}
+    image: ${LEAF_BAGGER_REPOSITORY:-ghcr.io/cwrc}/leaf-isle-bagger:${LEAF_BAGGER_TAG:-latest}
     networks:
       default: {}
     volumes:
