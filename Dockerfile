@@ -30,7 +30,7 @@ WORKDIR /var/www/
 # requries v24+ of Docker
 # https://github.com/docker/build-push-action/issues/761
 #COPY --chown=nginx:nginx --link rootfs /
-COPY --chown=nginx:nginx rootfs/ /var/www/
+COPY --chown=nginx:nginx rootfs/var/www/leaf-isle-bagger/requirements.txt /var/www/leaf-isle-bagger/requirements.txt
 
 WORKDIR /var/www/leaf-isle-bagger
 
@@ -59,9 +59,12 @@ RUN --mount=type=cache,id=bagger-apk-${TARGETARCH},sharing=locked,target=/var/ca
 
 WORKDIR /var/www/leaf-isle-bagger
 
-COPY --from=base /var/www/leaf-isle-bagger /var/www/leaf-isle-bagger
+COPY --chown=nginx:nginx rootfs/ /
+COPY --chown=nginx:nginx --from=base /var/www/leaf-isle-bagger/venv /var/www/leaf-isle-bagger/venv
 
 ENV \
+    LEAF_BAGGER_APP_DIR=/var/www/leaf-isle-bagger/ \
+    OS_CONTAINER= \
     OS_AUTH_URL= \
     OS_PROJECT_ID= \
     OS_PROJECT_NAME= \

@@ -209,7 +209,7 @@ def audit(audit_writer, node_list, aip_dir, swift_container) :
             if (swift_stat):
                 for dst in swift_stat:
 
-                    logging.info(f"{dst}")
+                    logging.debug(f"{dst}")
 
                     status = ""
                     if (dst['success'] == False):
