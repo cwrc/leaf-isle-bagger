@@ -66,6 +66,7 @@ ENV \
     LEAF_BAGGER_APP_DIR=/var/www/leaf-isle-bagger/ \
     LEAF_BAGGER_OUTPUT_DIR=/data/log/ \
     LEAF_BAGGER_AUDIT_OUTPUT_DIR=/data/log/ \
+    LEAF_BAGGER_CROND_DATE_WINDOW=86400 \
     OS_CONTAINER= \
     OS_AUTH_URL= \
     OS_PROJECT_ID= \

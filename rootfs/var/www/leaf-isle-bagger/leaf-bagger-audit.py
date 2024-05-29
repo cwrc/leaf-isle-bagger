@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument('--container', required=False, help='OpenStack Swift container to upload into.', default='cwrc_test')
     parser.add_argument('--wait', required=False, help='Time to wait between API calls.', type=float, default=0.1)
     parser.add_argument('--logging_level', required=False, help='Logging level.', default=logging.INFO)
-    parser.add_argument('--bagger_app_dir', required=False, help='Path to the Bag creation tool.', default=f"{os.getenv('BAGGER_APP_DIR')}/var/output/")
+    parser.add_argument('--bagger_app_dir', required=False, help='Path to the Bag creation tool.', default=f"{os.getenv('BAGGER_OUTPUT_DIR')}")
     return parser.parse_args()
 
 

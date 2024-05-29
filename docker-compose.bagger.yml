@@ -27,6 +27,7 @@ secrets:
 volumes:
   bagger-data: {}
   bagger-log: {}
+  leaf-log: {}
 
 # Common build settings
 x-build-common: &build-common
@@ -62,8 +63,9 @@ services:
       BAGGER_DEFAULT_PER_BAG_LOG_BAG_CREATION: ${BAGGER_DEFAULT_PER_BAG_LOG_BAG_CREATION:-"true"}
       BAGGER_DEFAULT_PER_BAG_LOG_BAG_LOCATION: ${BAGGER_DEFAULT_PER_BAG_LOG_BAG_LOCATION:-"false"}
       BAGGER_DEFAULT_PER_BAG_REGISTER_BAGS_WITH_ISLANDORA: ${BAGGER_DEFAULT_PER_BAG_REGISTER_BAGS_WITH_ISLANDORA:-"false"}
-      LEAF_BAGGER_OUTPUT_DIR: ${LEAF_BAGGER_OUTPUT_DIR}
+      LEAF_BAGGER_CROND_DATE_WINDOW: ${LEAF_BAGGER_CROND_DATE_WINDOW:-86400}
       LEAF_BAGGER_AUDIT_OUTPUT_DIR: ${LEAF_BAGGER_AUDIT_OUTPUT_DIR}
+      LEAF_BAGGER_OUTPUT_DIR: ${LEAF_BAGGER_OUTPUT_DIR}
       OS_CONTAINER: ${OS_CONTAINER}
       OS_AUTH_URL: ${OS_AUTH_URL}
       OS_IDENTITY_API_VERSION: ${OS_IDENTITY_API_VERSION}
@@ -80,3 +82,4 @@ services:
     volumes:
       - ${LOCAL_AIP_DIR:-bagger-data}:${BAGGER_OUTPUT_DIR:-/var/www/bagger/var/output}
       - bagger-log:/var/www/bagger/var/log
+      - leaf-log:${LEAF_BAGGER_OUTPUT_DIR}
