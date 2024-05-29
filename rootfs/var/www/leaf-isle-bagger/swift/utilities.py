@@ -8,6 +8,7 @@ import logging
 import os
 import time
 
+from datetime import datetime
 from swiftclient.service import ClientException, SwiftError, SwiftService, SwiftUploadObject
 
 
@@ -144,6 +145,10 @@ def upload(swift_conn_dst, dst_objs, container_dst, db_writer=None) :
                 log_upload(db_writer, dst_item, container_dst, checksums, os.getenv('OS_USERNAME'))
 
 #
+def swift_timestamp_to_iso8601(ts) :
+    return datetime.strptime(ts, '%a, %d %b %Y %H:%M:%S %Z').strftime("%Y-%m-%dT%H:%M:%S%z")
+
+#
 def audit_init(fd) :
     audit_writer = csv.DictWriter(fd, fieldnames=[
         'drupal_id',
@@ -164,7 +169,7 @@ def audit_record(audit_writer, src_id, src_changed, swift_id="", swift_timestamp
         'drupal_id': src_id,
         'drupal_changed': src_changed,
         'swift_id': swift_id,
-        'swift_timestamp': swift_timestamp,
+        'swift_timestamp': swift_timestamp_to_iso8601(swift_timestamp) if (swift_timestamp) else "",
         'swift_meta_changed': swift_changed,
         'swift_bytes': swift_bytes,
         'status': status
