@@ -64,6 +64,8 @@ COPY --chown=nginx:nginx --from=base /var/www/leaf-isle-bagger/venv /var/www/lea
 
 ENV \
     LEAF_BAGGER_APP_DIR=/var/www/leaf-isle-bagger/ \
+    LEAF_BAGGER_OUTPUT_DIR=/data/log/ \
+    LEAF_BAGGER_AUDIT_OUTPUT_DIR=/data/log/ \
     OS_CONTAINER= \
     OS_AUTH_URL= \
     OS_PROJECT_ID= \

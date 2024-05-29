@@ -13,6 +13,7 @@ import argparse
 import json
 import logging
 import os
+import pathlib
 
 from drupal import api as drupalApi
 from drupal import utilities as drupalUtilities
@@ -80,6 +81,7 @@ def main():
 
     session = drupalApi.init_session(args, username, password)
 
+    pathlib.Path(os.path.dirname(args.output)).mkdir(parents=True, exist_ok=True)
     with open(args.output, 'wt', encoding="utf-8", newline='') as output_file:
         process(args, session, output_file)
 
