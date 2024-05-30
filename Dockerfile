@@ -5,7 +5,7 @@ ARG BAGGER_TAG
 # ---------------------------
 # Base build layer
 # ---------------------------
-FROM --platform=$BUILDPLATFORM ${BAGGER_REPOSITORY:-ghcr.io/cwrc}/isle-bagger:${BAGGER_TAG:-v0.0.2} as base
+FROM --platform=$BUILDPLATFORM ${BAGGER_REPOSITORY:-ghcr.io/cwrc}/isle-bagger:${BAGGER_TAG:-v0.0.3} as base
 
 # Install packages and tools that allow for basic python install.
 # python-keystoneclient requirements
@@ -30,7 +30,7 @@ WORKDIR /var/www/
 # requries v24+ of Docker
 # https://github.com/docker/build-push-action/issues/761
 #COPY --chown=nginx:nginx --link rootfs /
-COPY --chown=nginx:nginx rootfs/var/www/leaf-isle-bagger/requirements.txt /var/www/leaf-isle-bagger/requirements.txt
+COPY --chown=nginx:nginx rootfs/var/www/leaf-isle-bagger/requirements/requirements.txt /var/www/leaf-isle-bagger/requirements/requirements.txt
 
 WORKDIR /var/www/leaf-isle-bagger
 
@@ -41,7 +41,7 @@ WORKDIR /var/www/leaf-isle-bagger
 RUN \
     python3 -m venv ./venv/ \
     && \
-    ./venv/bin/python3 -m pip install -r requirements.txt 
+    ./venv/bin/python3 -m pip install -r requirements/requirements.txt 
 
 # ---------------------------
 # Production layer

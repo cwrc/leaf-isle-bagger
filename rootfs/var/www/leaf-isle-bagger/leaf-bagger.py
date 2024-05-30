@@ -7,35 +7,59 @@
 # date: May 15, 2024
 ##############################################################################################
 
-from getpass import getpass
-from time import sleep
 import argparse
-import json
 import logging
 import os
 import pathlib
 
 from drupal import api as drupalApi
 from drupal import utilities as drupalUtilities
-from swift import api as swiftApi
 from swift import utilities as swiftUtilities
+
 
 #
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--server', required=True, help='Server name.')
-    parser.add_argument('--output', required=True, help='Location to store CSV output file.')
-    parser.add_argument('--date', required=False, help='Items changed after the given date.')
-    parser.add_argument('--container', required=False, help='OpenStack Swift container to upload into.', default='cwrc_test')
-    parser.add_argument('--wait', required=False, help='Time to wait between API calls.', type=float, default=0.1)
-    parser.add_argument('--logging_level', required=False, help='Logging level.', default=logging.INFO)
-    parser.add_argument('--bagger_app_dir', required=False, help='Path to the Bag creation tool.', default=os.getenv('BAGGER_APP_DIR'))
-    parser.add_argument('--aip_dir', required=False, help='Path to the Archival Information Packages (AIPs/BAGs).', default=f"{os.getenv('BAGGER_OUTPUT_DIR')}")
+    parser.add_argument("--server", required=True, help="Server name.")
+    parser.add_argument(
+        "--output", required=True, help="Location to store CSV output file."
+    )
+    parser.add_argument(
+        "--date", required=False, help="Items changed after the given date."
+    )
+    parser.add_argument(
+        "--container",
+        required=False,
+        help="OpenStack Swift container to upload into.",
+        default="cwrc_test",
+    )
+    parser.add_argument(
+        "--wait",
+        required=False,
+        help="Time to wait between API calls.",
+        type=float,
+        default=0.1,
+    )
+    parser.add_argument(
+        "--logging_level", required=False, help="Logging level.", default=logging.INFO
+    )
+    parser.add_argument(
+        "--bagger_app_dir",
+        required=False,
+        help="Path to the Bag creation tool.",
+        default=os.getenv("BAGGER_APP_DIR"),
+    )
+    parser.add_argument(
+        "--aip_dir",
+        required=False,
+        help="Path to the Archival Information Packages (AIPs/BAGs).",
+        default=f"{os.getenv('BAGGER_OUTPUT_DIR')}",
+    )
     return parser.parse_args()
 
 
 #
-def process(args, session, output_file):
+def process(args, session):
 
     # a list of resources to preserve
     node_list = {}
@@ -51,24 +75,27 @@ def process(args, session, output_file):
     logging.info(f"Drupal nodes with media changes - {node_list}")
 
     # create archival information packages
-    logging.info(f"Create AIPs")
+    logging.info("Create AIPs")
     drupalUtilities.create_aip(node_list, args.bagger_app_dir)
 
     # upload archival information packages
-    logging.info(f"Upload AIPs")
+    logging.info("Upload AIPs")
     options = {
-        'header' : {
-            'x-object-meta-project-id': "",
-            'x-object-meta-aip-version': "",
-            'x-object-meta-project': "",
-            'x-object-meta-promise': ""
+        "header": {
+            "x-object-meta-project-id": "",
+            "x-object-meta-aip-version": "",
+            "x-object-meta-project": "",
+            "x-object-meta-promise": "",
         }
     }
-    swiftUtilities.upload_aip(node_list, args.aip_dir, options, args.container, args.output)
+    swiftUtilities.upload_aip(
+        node_list, args.aip_dir, options, args.container, args.output
+    )
 
     # validate archival information packages
-    logging.info(f"Validate Upload")
+    logging.info("Validate Upload")
     swiftUtilities.validate(node_list, args.container)
+
 
 #
 def main():
@@ -82,8 +109,7 @@ def main():
     session = drupalApi.init_session(args, username, password)
 
     pathlib.Path(os.path.dirname(args.output)).mkdir(parents=True, exist_ok=True)
-    with open(args.output, 'wt', encoding="utf-8", newline='') as output_file:
-        process(args, session, output_file)
+    process(args, session)
 
 
 if __name__ == "__main__":
