@@ -1,0 +1,85 @@
+# Deployment of the Islandora Bagger container alongside an isle-site-template
+#
+# Steps:
+#   * add the following to the `.env` file
+#     # Chain docker-compose.yml files
+#     COMPOSE_PATH_SEPARATOR=:
+#     COMPOSE_FILE=docker-compose.yml:docker-compose.bagger.yml
+#     # Environment for the Islandora Bagger container
+#     BAGGER_REPOSITORY=ghcr.io/cwrc
+#     BAGGER_TAG=latest
+#     BAGGER_DEFAULT_PER_BAG_REGISTER_BAGS_WITH_ISLANDORA=true
+#
+#   * copy this file into the repo
+#   * temporarily for a dev site, copy local `build/certs/rootCA.pem` into the container /etc/ssl/certs/ca-certificates.crt otherwise REST request receive a cert error (e.g., curl)
+
+x-dev: &dev
+  secrets:
+    - source: BAGGER_DRUPAL_DEFAULT_ACCOUNT_PASSWORD
+    - source: OS_PASSWORD
+
+secrets:
+  BAGGER_DRUPAL_DEFAULT_ACCOUNT_PASSWORD:
+    file: ./env/secrets/DRUPAL_DEFAULT_ACCOUNT_PASSWORD
+  OS_PASSWORD:
+    file: ./env/secrets/SWIFT_ACCOUNT_PASSWORD
+
+volumes:
+  bagger-data: {}
+  bagger-log: {}
+  leaf-log: {}
+
+# Common build settings
+x-build-common: &build-common
+  args:
+    BAGGER_REPOSITORY: ${BAGGER_REPOSITORY:-ghcr.io/cwrc}
+    BAGGER_TAG: ${BAGGER_TAG:-latest}
+  x-bake:
+    platforms:
+      - linux/amd64
+      - linux/arm64
+
+services:
+
+  bagger:
+    <<: *dev
+    build:
+      <<: *build-common
+      context: .
+    restart: "no"
+    environment:
+      BAGGER_DRUPAL_URL: ${SITE:-"https://islandora.dev"} 
+      BAGGER_CROND_ENABLE_SERVICE: ${BAGGER_CROND_ENABLE_SERVICE:-"true"}
+      BAGGER_CROND_SCHEDULE: ${BAGGER_CROND_SCHEDULE:-1 2 * * *}
+      BAGGER_CROND_LOG_LEVEL: ${BAGGER_CROND_LOG_LEVEL:-"8"}
+      BAGGER_OUTPUT_DIR: ${BAGGER_OUTPUT_DIR:-/var/www/bagger/var/output}
+      BAGGER_BAG_DOWNLOAD_PREFIX: ${BAGGER_BAG_DOWNLOAD_PREFIX:-""}  # unused
+      BAGGER_DEFAULT_PER_BAG_NAME_TEMPLATE: ${BAGGER_DEFAULT_PER_BAG_NAME_TEMPLATE:-"aip_%"}
+      BAGGER_DEFAULT_PER_BAG_CONTACT_NAME: ${BAGGER_DEFAULT_PER_BAG_CONTACT_NAME:-Contact Name}
+      BAGGER_DEFAULT_PER_BAG_CONTACT_EMAIL: ${BAGGER_DEFAULT_PER_BAG_CONTACT_EMAIL:-Contact EMail}
+      BAGGER_DEFAULT_PER_BAG_SOURCE_ORGANIZATION: ${BAGGER_DEFAULT_PER_BAG_SOURCE_ORGANIZATION:-Contact Organization}
+      BAGGER_DEFAULT_PER_BAG_HTTP_TIMEOUT: ${BAGGER_DEFAULT_PER_BAG_HTTP_TIMEOUT:-"120"}
+      BAGGER_DEFAULT_PER_BAG_DELETE_SETTINGS_FILE: ${BAGGER_DEFAULT_PER_BAG_DELETE_SETTINGS_FILE:-"false"}
+      BAGGER_DEFAULT_PER_BAG_LOG_BAG_CREATION: ${BAGGER_DEFAULT_PER_BAG_LOG_BAG_CREATION:-"true"}
+      BAGGER_DEFAULT_PER_BAG_LOG_BAG_LOCATION: ${BAGGER_DEFAULT_PER_BAG_LOG_BAG_LOCATION:-"false"}
+      BAGGER_DEFAULT_PER_BAG_REGISTER_BAGS_WITH_ISLANDORA: ${BAGGER_DEFAULT_PER_BAG_REGISTER_BAGS_WITH_ISLANDORA:-"false"}
+      LEAF_BAGGER_CROND_DATE_WINDOW: ${LEAF_BAGGER_CROND_DATE_WINDOW:-86400}
+      LEAF_BAGGER_AUDIT_OUTPUT_DIR: ${LEAF_BAGGER_AUDIT_OUTPUT_DIR}
+      LEAF_BAGGER_OUTPUT_DIR: ${LEAF_BAGGER_OUTPUT_DIR}
+      OS_CONTAINER: ${OS_CONTAINER}
+      OS_AUTH_URL: ${OS_AUTH_URL}
+      OS_IDENTITY_API_VERSION: ${OS_IDENTITY_API_VERSION}
+      OS_INTERFACE: ${OS_INTERFACE}
+      OS_PROJECT_ID: ${OS_PROJECT_ID}
+      OS_PROJECT_NAME: ${OS_PROJECT_NAME}
+      OS_PROJECT_DOMAIN_ID: ${OS_PROJECT_DOMAIN_ID}
+      OS_USER_DOMAIN_NAME: ${OS_USER_DOMAIN_NAME}
+      OS_USERNAME: ${OS_USERNAME}
+      OS_REGION_NAME: ${OS_REGION_NAME}
+    image: ${LEAF_BAGGER_REPOSITORY:-ghcr.io/cwrc}/leaf-isle-bagger:${LEAF_BAGGER_TAG:-latest}
+    networks:
+      default: {}
+    volumes:
+      - ${LOCAL_AIP_DIR:-bagger-data}:${BAGGER_OUTPUT_DIR:-/var/www/bagger/var/output}
+      - bagger-log:/var/www/bagger/var/log
+      - leaf-log:${LEAF_BAGGER_OUTPUT_DIR}
