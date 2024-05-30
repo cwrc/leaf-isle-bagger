@@ -20,10 +20,11 @@ def lint(session):
     session.install("-r", _requirements_tests)
     session.install("-r", _requirements_app)
     session.run("flake8", "--max-line-length=120", "--exclude=venv,__pycache__,.nox")
-    #session.run("pylint", f"{_python_app_dir}", "--extension-pkg-allow-list=")
+    # session.run("pylint", f"{_python_app_dir}", "--extension-pkg-allow-list=")
 
 
-@nox.session
+# @nox.session(python=["3.10", "3.11", "3.12"])
+@nox.session(python=["3.10"])
 def test(session):
     session.install("-r", _requirements_tests)
     session.install("-r", _requirements_app)
