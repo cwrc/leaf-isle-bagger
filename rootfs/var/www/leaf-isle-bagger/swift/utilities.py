@@ -221,35 +221,41 @@ def audit(audit_writer, node_list, aip_dir, swift_container) :
                         # test if AIP in OLRC
                         logging.error(f"id:[{item_id}] - preservation error [{dst['error']}]")
                         logging.error(f"id:[{item_id}] - swift stat - [{dst}]")
-                        status = _AUDIT_STATUS_WARN_SWIFT_MISSING
-                    elif (item_values['changed'] != dst['headers']['x-object-meta-last-mod-timestamp']):
-                        # test Drupal and Swift timestamps
-                        status = _AUDIT_STATUS_WARN_SWIFT_TIMESTAMP
-                        logging.error(f"id:[{item_id}] - mismatched modification timestamp [{item_values['changed']}] : [{dst['headers']['x-object-meta-last-mod-timestamp']}]")
-                    elif (
-                            'x-object-meta-sha256sum' in dst['headers']
-                            and
-                            checksums['sha256sum'] != dst['headers']['x-object-meta-sha256sum']
-                            ):
-                        # test filesystem and Swift checksums
-                        status = _AUDIT_STATUS_WARN_SWIFT_CHECKSUM
-                        logging.error(f"id:[{item_id}] - mismatched checksum [{checksums['sha256sum']}] : [{dst['headers']['x-object-meta-sha256sum']}]")
+                        audit_record(audit_writer, item_id, item_values['changed'], status=_AUDIT_STATUS_WARN_SWIFT_MISSING)
                     else:
-                        status = _AUDIT_STATUS_OK
-                        logging.info(f"  Audit success: {item_id} - {aip_id} - {aip_path}")
-
-                    audit_record(
-                        audit_writer,
-                        item_id,
-                        item_values['changed'],
-                        dst['object'],
-                        dst['headers']['last-modified'],
-                        dst['headers']['x-object-meta-last-mod-timestamp'],
-                        dst['headers']['content-length'],
-                        status
+                        # Swift record found, test properties
+                        status = audit_swift_properties(item_id, item_values, dst, checksums, aip_id, aip_path)
+                        audit_record(
+                            audit_writer,
+                            item_id,
+                            item_values['changed'],
+                            dst['object'],
+                            dst['headers']['last-modified'],
+                            dst['headers']['x-object-meta-last-mod-timestamp'],
+                            dst['headers']['content-length'],
+                            status
                         )
 
             else:
                 # Connection failure
                 logging.error(f"key:[{item_id}] - connection error: {swift_stat}")
 
+def audit_swift_properties(item_id, item_values, dst, checksums, aip_id, aip_path) :
+
+    if (item_values['changed'] != dst['headers']['x-object-meta-last-mod-timestamp']):
+        # test Drupal and Swift timestamps
+        status = _AUDIT_STATUS_WARN_SWIFT_TIMESTAMP
+        logging.error(f"id:[{item_id}] - mismatched modification timestamp [{item_values['changed']}] : [{dst['headers']['x-object-meta-last-mod-timestamp']}]")
+    elif (
+            'x-object-meta-sha256sum' in dst['headers']
+            and
+            checksums['sha256sum'] != dst['headers']['x-object-meta-sha256sum']
+            ):
+        # test filesystem and Swift checksums
+        status = _AUDIT_STATUS_WARN_SWIFT_CHECKSUM
+        logging.error(f"id:[{item_id}] - mismatched checksum [{checksums['sha256sum']}] : [{dst['headers']['x-object-meta-sha256sum']}]")
+    else:
+        status = _AUDIT_STATUS_OK
+        logging.info(f"  Audit success: {item_id} - {aip_id} - {aip_path}")
+
+    return status

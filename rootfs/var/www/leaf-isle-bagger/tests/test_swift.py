@@ -4,6 +4,7 @@ Test the OpenStack Swift integration module
 
 import csv
 import logging
+import json
 import os
 import pytest
 import pytest_mock
@@ -33,16 +34,16 @@ _swift_download_response = {
         }
     }
 }
-_aip_dir = 'rootfs/leaf-isle-bagger/tests/assets/fixtures'
+_aip_dir = 'rootfs/var/www/leaf-isle-bagger/tests/assets/fixtures'
 
 def test_upload_to_destination(tmpdir, mocker):
     # test AIP
     t = { 'path' : f"{tmpdir}/aip_{_object_id}.zip" }
-    shutil.copy('rootfs/leaf-isle-bagger/tests/assets/fixtures/aip_1.zip', t['path'])
+    shutil.copy('rootfs/var/www/leaf-isle-bagger/tests/assets/fixtures/aip_1.zip', t['path'])
     upload_obj = [swiftUtilities.build_swift_upload_object(t['path'], _object_id, {}, {})]
     csv_path = tmpdir / "csv"
     with open(csv_path, 'w', newline='') as csv_fd:
-        csv_obj = swiftUtilities.csv_init(csv_fd)
+        csv_obj = swiftUtilities.log_init(csv_fd)
         mocker.patch('leaf-bagger.swiftUtilities.SwiftService.upload', return_value=[
             {
                 'action': 'upload_object',
@@ -105,90 +106,121 @@ def test_validation_id_mismatch(caplog, mocker) :
         assert "not present in destination" in caplog.text
 
 # Test Audit
-def test_audit(caplog, mocker) :
+def test_audit(caplog, mocker, tmpdir) :
     node_list = {1: {'changed': '2024-01-01T01:01:01+00:00', 'content_type': 'application/zip'}}
     mocker.patch('leaf-bagger.swiftUtilities.SwiftService.stat', return_value=[
             {
                 'headers' : {
                     'x-object-meta-last-mod-timestamp' : '2024-01-01T01:01:01+00:00',
                     'x-object-meta-sha256sum' : '4e7c226ea38f60bd4187c6d0dd8f73463643d56fba46c1efd38c634a99d8cd40',
-                    'etag' : ''
+                    'etag' : '',
+                    'last-modified': "Wed, 29 May 2024 22:29:37 GMT",
+                    'content-length': "158",
                     },
+                'object'  : "aip_1.zip",
                 'success' : True
             }
         ])
     with caplog.at_level(logging.ERROR):
-        swiftUtilities.audit(node_list, _aip_dir, "")
-        for record in caplog.records:
-            assert record.levelname != "ERROR"
+        audit_path = tmpdir / "csv"
+        with open(audit_path, 'w', newline='') as audit_fd:
+            audit_obj = swiftUtilities.audit_init(audit_fd)
+            swiftUtilities.audit(audit_obj, node_list, _aip_dir, "")
+            for record in caplog.records:
+                assert record.levelname != "ERROR"
 
 # Test validation: fail on preservation date
-def test_audit_date_mismatch(caplog, mocker) :
+def test_audit_date_mismatch(caplog, mocker, tmpdir) :
     node_list = {1: {'changed': '2024-01-01T01:01:01+00:00', 'content_type': 'application/zip'}}
     mocker.patch('leaf-bagger.swiftUtilities.SwiftService.stat', return_value=[
             {
                 'headers' : {
                     'x-object-meta-last-mod-timestamp' : '2026-01-01',
                     'x-object-meta-sha256sum' : '4e7c226ea38f60bd4187c6d0dd8f73463643d56fba46c1efd38c634a99d8cd40',
-                    'etag' : ''
+                    'etag' : '',
+                    'last-modified': "Wed, 29 May 2024 22:29:37 GMT",
+                    'content-length': "158",
                     },
+                'object'  : "aip_1.zip",
                 'success' : True
             }
         ])
     with caplog.at_level(logging.ERROR):
-        swiftUtilities.audit(node_list, _aip_dir, "")
-        for record in caplog.records:
-            assert record.levelname == "ERROR"
-        assert "mismatched modification timestamp" in caplog.text
+        audit_path = tmpdir / "csv"
+        with open(audit_path, 'w', newline='') as audit_fd:
+            audit_obj = swiftUtilities.audit_init(audit_fd)
+            swiftUtilities.audit(audit_obj, node_list, _aip_dir, "")
+            for record in caplog.records:
+                assert record.levelname == "ERROR"
+            assert "mismatched modification timestamp" in caplog.text
 
 # Test validation: fail on file date
-def test_audit_date_mismatch_file(caplog, mocker) :
+def test_audit_date_mismatch_file(caplog, mocker, tmpdir) :
     node_list = {1: {'changed': '9999-01-01T01:01:01+00:00', 'content_type': 'application/zip'}}
     mocker.patch('leaf-bagger.swiftUtilities.SwiftService.stat', return_value=[
             {
                 'headers' : {
                     'x-object-meta-last-mod-timestamp' : '2026-01-01',
                     'x-object-meta-sha256sum' : '4e7c226ea38f60bd4187c6d0dd8f73463643d56fba46c1efd38c634a99d8cd40',
-                    'etag' : ''
+                    'etag' : '',
+                    'last-modified': "Wed, 29 May 2024 22:29:37 GMT",
+                    'content-length': "158",
                     },
+                'object'  : "aip_1.zip",
                 'success' : True
             }
         ])
     with caplog.at_level(logging.ERROR):
-        swiftUtilities.audit(node_list, _aip_dir, "")
-        for record in caplog.records:
-            assert record.levelname == "ERROR"
-        assert "filesystem date older than source date" in caplog.text
+        audit_path = tmpdir / "csv"
+        with open(audit_path, 'w', newline='') as audit_fd:
+            audit_obj = swiftUtilities.audit_init(audit_fd)
+            swiftUtilities.audit(audit_obj, node_list, _aip_dir, "")
+            for record in caplog.records:
+                assert record.levelname == "ERROR"
+            assert "filesystem date older than source date" in caplog.text
 
 # Test validation: fail on file checksum
-def test_audit_checksum(caplog, mocker) :
+def test_audit_checksum(caplog, mocker, tmpdir) :
     node_list = {1: {'changed': '2024-01-01T01:01:01+00:00', 'content_type': 'application/zip'}}
     mocker.patch('leaf-bagger.swiftUtilities.SwiftService.stat', return_value=[
             {
                 'headers' : {
                     'x-object-meta-last-mod-timestamp' : '2024-01-01T01:01:01+00:00',
                     'x-object-meta-sha256sum' : '0',
-                    'etag' : ''
+                    'etag' : '',
+                    'last-modified': "Wed, 29 May 2024 22:29:37 GMT",
+                    'content-length': "158",
                     },
+                'object'  : "aip_1.zip",
                 'success' : True
             }
         ])
     with caplog.at_level(logging.ERROR):
-        swiftUtilities.audit(node_list, _aip_dir, "")
-        for record in caplog.records:
-            assert record.levelname == "ERROR"
-        assert "mismatched checksum" in caplog.text
+        audit_path = tmpdir / "csv"
+        with open(audit_path, 'w', newline='') as audit_fd:
+            audit_obj = swiftUtilities.audit_init(audit_fd)
+            swiftUtilities.audit(audit_obj, node_list, _aip_dir, "")
+            for record in caplog.records:
+                assert record.levelname == "ERROR"
+            assert "mismatched checksum" in caplog.text
 
 
 
 # Test validation: fail on missing id
-def test_audit_id_mismatch(caplog, mocker) :
-    node_list = {1: {'changed': '2024-01-01T01:01:01+00:00', 'content_type': 'application/zip'}}
+def test_audit_id_mismatch(caplog, mocker, tmpdir) :
+    node_list = {1: {"changed": "2024-01-01T01:01:01+00:00", "content_type": "application/zip"}}
     mocker.patch('leaf-bagger.swiftUtilities.SwiftService.stat', return_value=[
+            {
+                'success' : False,
+                'error' : ""
+            }
         ])
     with caplog.at_level(logging.ERROR):
-        swiftUtilities.audit(node_list, _aip_dir, "")
-        for record in caplog.records:
-            assert record.levelname == "ERROR"
-        assert "not present in destination" in caplog.text
+        audit_path = tmpdir / "csv"
+        with open(audit_path, 'w', newline='') as audit_fd:
+            audit_obj = swiftUtilities.audit_init(audit_fd)
+            swiftUtilities.audit(audit_obj, node_list, _aip_dir, "")
+            for record in caplog.records:
+                assert record.levelname == "ERROR"
+            assert "preservation error" in caplog.text
 
