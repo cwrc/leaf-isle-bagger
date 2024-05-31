@@ -50,14 +50,20 @@ RUN \
 FROM --platform=$BUILDPLATFORM ${BAGGER_REPOSITORY:-ghcr.io/cwrc}/isle-bagger:${BAGGER_TAG:-v0.0.2} as prod
 
 # Install packages and tools that allow for basic downloads.
+# cleanup unused base image components
 RUN --mount=type=cache,id=bagger-apk-${TARGETARCH},sharing=locked,target=/var/cache/apk \
     apk add --no-cache \
         python3 \
         py3-requests \
     && \
+    rm -rf /etc/s6-overlay/s6-rc.d/user/contents.d/fpm /etc/s6-overlay/s6-rc.d/user/contents.d/nginx \
+    && \
+    rm -rf /etc/s6-overlay/s6-rc.d/nginx* /etc/s6-overlay/s6-rc.d/fpm* \
+    && \
     echo '' > /root/.ash_history
 
 WORKDIR /var/www/leaf-isle-bagger
+
 
 COPY --chown=nginx:nginx rootfs/ /
 COPY --chown=nginx:nginx --from=base /var/www/leaf-isle-bagger/venv /var/www/leaf-isle-bagger/venv
