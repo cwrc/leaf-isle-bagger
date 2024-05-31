@@ -56,3 +56,12 @@ def get_media_list(session, server, page=0, date_filter=""):
     )
     response.raise_for_status()
     return response
+
+
+#
+def get_node_by_format(session, server, item_id):
+    response = session.get(
+        urljoin(server, f"node/{item_id}?_format=json"),
+    )
+    response.raise_for_status()
+    return response

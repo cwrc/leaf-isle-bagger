@@ -2,7 +2,11 @@
 # desc: connect to a Drupal instance, get a list of Drupal Nodes and Media that have changed
 #       since a supplied date and return a list of Drupal Nodes (e.g., to preserve in an
 #       AIP - archival information package)
-# usage: python3 get_node_id.py --server ${server_name} --output ${output_path} --date '2024-05-16T16:51:52'
+# usage: python3 leaf-bagger.py \
+#          --server ${server_name} \
+#          --output ${output_path} \
+#          --date '2024-05-16T16:51:52' \
+#          --container 'test' \
 # license: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
 # date: May 15, 2024
 ##############################################################################################
@@ -55,6 +59,12 @@ def parse_args():
         help="Path to the Archival Information Packages (AIPs/BAGs).",
         default=f"{os.getenv('BAGGER_OUTPUT_DIR')}",
     )
+    parser.add_argument(
+        "--force_single_node",
+        required=False,
+        help="Override node selection and process only the specified item.",
+        default="",
+    )
     return parser.parse_args()
 
 
@@ -64,15 +74,19 @@ def process(args, session):
     # a list of resources to preserve
     node_list = {}
 
-    # get a list of Drupal Node IDs changed since a given optional date
-    node_list = drupalUtilities.id_list_from_nodes(session, args)
-    logging.info(f"Drupal nodes - {node_list}")
-
-    # inspect Drupal Media for changes
-    # a Media change is does not transitively change the associated Node change timestamp)
-    # if Media changed then add associated Node ID to the list
-    drupalUtilities.id_list_merge_with_media(session, args, node_list)
-    logging.info(f"Drupal nodes with media changes - {node_list}")
+    if args.force_single_node:
+        node_list = drupalUtilities.id_list_from_arg(session, args)
+        logging.info(node_list)
+    else:
+        # get a list of Drupal Node IDs changed since a given optional date
+        # or a single node then force update
+        node_list = drupalUtilities.id_list_from_nodes(session, args)
+        logging.info(node_list)
+        # inspect Drupal Media for changes
+        # a Media change is does not transitively change the associated Node change timestamp)
+        # if Media changed then add associated Node ID to the list
+        drupalUtilities.id_list_merge_with_media(session, args, node_list)
+        logging.info(f"Drupal nodes with media changes - {node_list}")
 
     # create archival information packages
     logging.info("Create AIPs")
