@@ -54,7 +54,7 @@ def test_upload_to_destination(tmpdir, mocker):
     with open(csv_path, "w", newline="") as csv_fd:
         csv_obj = swiftUtilities.log_init(csv_fd)
         mocker.patch(
-            "leaf-bagger.swiftUtilities.SwiftService.upload",
+            f"{__name__}.SwiftService.upload",
             return_value=[
                 {
                     "action": "upload_object",
@@ -82,7 +82,7 @@ def test_upload_to_destination(tmpdir, mocker):
 def test_validation(caplog, mocker):
     node_list = {1: {"changed": "2025-01-01", "content_type": "application/zip"}}
     mocker.patch(
-        "leaf-bagger.swiftUtilities.SwiftService.stat",
+        f"{__name__}.swiftUtilities.SwiftService.stat",
         return_value=[
             {
                 "headers": {"x-object-meta-last-mod-timestamp": "2025-01-01"},
@@ -100,7 +100,7 @@ def test_validation(caplog, mocker):
 def test_validation_date_mismatch(caplog, mocker):
     node_list = {1: {"changed": "2025-01-01", "content_type": "application/zip"}}
     mocker.patch(
-        "leaf-bagger.swiftUtilities.SwiftService.stat",
+        f"{__name__}.SwiftService.stat",
         return_value=[
             {
                 "headers": {"x-object-meta-last-mod-timestamp": "2024-01-01"},
@@ -118,7 +118,7 @@ def test_validation_date_mismatch(caplog, mocker):
 # Test validation: fail on missing id
 def test_validation_id_mismatch(caplog, mocker):
     node_list = {1: {"changed": "2025-01-01", "content_type": "application/zip"}}
-    mocker.patch("leaf-bagger.swiftUtilities.SwiftService.stat", return_value=[])
+    mocker.patch(f"{__name__}.SwiftService.stat", return_value=[])
     with caplog.at_level(logging.ERROR):
         swiftUtilities.validate(node_list, "")
         for record in caplog.records:
@@ -132,7 +132,7 @@ def test_audit(caplog, mocker, tmpdir):
         1: {"changed": "2024-01-01T01:01:01+00:00", "content_type": "application/zip"}
     }
     mocker.patch(
-        "leaf-bagger.swiftUtilities.SwiftService.stat",
+        f"{__name__}.SwiftService.stat",
         return_value=[
             {
                 "headers": {
@@ -162,7 +162,7 @@ def test_audit_date_mismatch(caplog, mocker, tmpdir):
         1: {"changed": "2024-01-01T01:01:01+00:00", "content_type": "application/zip"}
     }
     mocker.patch(
-        "leaf-bagger.swiftUtilities.SwiftService.stat",
+        f"{__name__}.SwiftService.stat",
         return_value=[
             {
                 "headers": {
@@ -193,7 +193,7 @@ def test_audit_date_mismatch_file(caplog, mocker, tmpdir):
         1: {"changed": "9999-01-01T01:01:01+00:00", "content_type": "application/zip"}
     }
     mocker.patch(
-        "leaf-bagger.swiftUtilities.SwiftService.stat",
+        f"{__name__}.SwiftService.stat",
         return_value=[
             {
                 "headers": {
@@ -224,7 +224,7 @@ def test_audit_checksum(caplog, mocker, tmpdir):
         1: {"changed": "2024-01-01T01:01:01+00:00", "content_type": "application/zip"}
     }
     mocker.patch(
-        "leaf-bagger.swiftUtilities.SwiftService.stat",
+        f"{__name__}.SwiftService.stat",
         return_value=[
             {
                 "headers": {
@@ -255,7 +255,7 @@ def test_audit_id_mismatch(caplog, mocker, tmpdir):
         1: {"changed": "2024-01-01T01:01:01+00:00", "content_type": "application/zip"}
     }
     mocker.patch(
-        "leaf-bagger.swiftUtilities.SwiftService.stat",
+        f"{__name__}.SwiftService.stat",
         return_value=[{"success": False, "error": ""}],
     )
     with caplog.at_level(logging.ERROR):
