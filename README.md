@@ -180,7 +180,7 @@ Note: if wanting to test [leaf-isle-bagger] and [isle-bagger] locally
 - `docker compose up -d` to run the container
 - `docker compose exec bagger with-contenv bash` to shell into the container
 
-See the following as an alternative to specifying an OCI image registry and tag in the Dockerfile: <https://docs.docker.com/build/bake/reference/>. As an example, see [isle-buildkit] `bake.hcl`.
+See the following as an alternative to specifying an OCI image registry and tag in the Dockerfile: <https://docs.docker.com/build/bake/reference/>. As an example, see [isle-buildkit] `docker-bake.hcl`.
 
 ---
 
