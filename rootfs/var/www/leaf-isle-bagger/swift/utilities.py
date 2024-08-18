@@ -51,7 +51,8 @@ def upload_aip(node_list, aip_dir, swift_options, container_dst, database_csv):
                         aip_id, aip_path, swift_options, item_options
                     )
                 )
-                upload(swift_conn_dst, dst_objs, container_dst, db_writer)
+            # May need to be split into batches of "x" if memory usage is too high
+            upload(swift_conn_dst, dst_objs, container_dst, db_writer)
             os.fsync(db_file)
 
 
@@ -179,7 +180,7 @@ def upload(swift_conn_dst, dst_objs, container_dst, db_writer=None):
                 dst_item["object"],
             )
             # log upload
-            logging.info(f"swift stat - [{dst_item}]")
+            logging.debug(f"swift stat - [{dst_item}]")
             if db_writer:
                 log_upload(
                     db_writer,
