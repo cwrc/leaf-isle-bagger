@@ -179,6 +179,7 @@ def upload(swift_conn_dst, dst_objs, container_dst, db_writer=None):
                 dst_item["object"],
             )
             # log upload
+            logging.info(f"swift stat - [{dst_item}]")
             if db_writer:
                 log_upload(
                     db_writer,
@@ -333,7 +334,7 @@ def audit_swift_properties(item_id, item_values, dst, checksums, aip_id, aip_pat
         logging.error(
             (
                 f"id:[{item_id}] - mismatched modification timestamp [{item_values['changed']}]"
-                " : [{dst['headers']['x-object-meta-last-mod-timestamp']}]"
+                f" : [{dst['headers']['x-object-meta-last-mod-timestamp']}]"
             )
         )
     elif (
@@ -345,7 +346,7 @@ def audit_swift_properties(item_id, item_values, dst, checksums, aip_id, aip_pat
         logging.error(
             (
                 f"id:[{item_id}] - mismatched checksum [{checksums['sha256sum']}]"
-                " : [{dst['headers']['x-object-meta-sha256sum']}]"
+                f" : [{dst['headers']['x-object-meta-sha256sum']}]"
             )
         )
     else:
