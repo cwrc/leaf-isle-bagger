@@ -51,7 +51,8 @@ def upload_aip(node_list, aip_dir, swift_options, container_dst, database_csv):
                         aip_id, aip_path, swift_options, item_options
                     )
                 )
-                upload(swift_conn_dst, dst_objs, container_dst, db_writer)
+            # May need to be split into batches of "x" if memory usage is too high
+            upload(swift_conn_dst, dst_objs, container_dst, db_writer)
             os.fsync(db_file)
 
 
@@ -179,6 +180,7 @@ def upload(swift_conn_dst, dst_objs, container_dst, db_writer=None):
                 dst_item["object"],
             )
             # log upload
+            logging.debug(f"swift stat - [{dst_item}]")
             if db_writer:
                 log_upload(
                     db_writer,
@@ -333,7 +335,7 @@ def audit_swift_properties(item_id, item_values, dst, checksums, aip_id, aip_pat
         logging.error(
             (
                 f"id:[{item_id}] - mismatched modification timestamp [{item_values['changed']}]"
-                " : [{dst['headers']['x-object-meta-last-mod-timestamp']}]"
+                f" : [{dst['headers']['x-object-meta-last-mod-timestamp']}]"
             )
         )
     elif (
@@ -345,7 +347,7 @@ def audit_swift_properties(item_id, item_values, dst, checksums, aip_id, aip_pat
         logging.error(
             (
                 f"id:[{item_id}] - mismatched checksum [{checksums['sha256sum']}]"
-                " : [{dst['headers']['x-object-meta-sha256sum']}]"
+                f" : [{dst['headers']['x-object-meta-sha256sum']}]"
             )
         )
     else:
