@@ -37,7 +37,7 @@ def upload_aip(node_list, aip_dir, swift_options, container_dst, database_csv):
             for key, item_values in node_list.items():
                 aip_path = generate_aip_path(aip_dir, key)
                 aip_id = generate_aip_id(key)
-                logging.info(f"  uploading: {aip_path}")
+                logging.info(f"  adding to upload: {aip_path}")
                 checksums = file_checksum(aip_path)
                 item_options = {
                     "header": {
@@ -133,12 +133,16 @@ def build_swift_upload_object(item, aip_path, swift_options, item_options):
 def file_checksum(path):
     hash_md5 = hashlib.md5()
     hash_sha256 = hashlib.sha256()
-    with open(path, "rb") as f:
-        # read and buffer to prevent high memory usage
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-            hash_sha256.update(chunk)
-    return {"md5sum": hash_md5.hexdigest(), "sha256sum": hash_sha256.hexdigest()}
+    try:
+        with open(path, "rb") as f:
+            # read and buffer to prevent high memory usage
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+                hash_sha256.update(chunk)
+    except FileNotFoundError as e:
+        logging.error(f"{e}")
+    finally:
+        return {"md5sum": hash_md5.hexdigest(), "sha256sum": hash_sha256.hexdigest()}
 
 
 #
@@ -155,40 +159,47 @@ def validate_checksum(path, etag, id):
 def upload(swift_conn_dst, dst_objs, container_dst, db_writer=None):
 
     for dst_item in swift_conn_dst.upload(container_dst, dst_objs):
-        # test if segmented large object: https://docs.openstack.org/swift/newton/overview_large_objects.html
-        if dst_item["action"] == "upload_object":
-            logging.debug(f"{dst_item}")
-        if not dst_item["success"]:
-            if "object" in dst_item:
-                logging.error(f"{dst_item}")
-                raise SwiftError(dst_item["error"], container_dst, dst_item["object"])
-            # Swift segmented object
-            elif "for_object" in dst_item:
-                logging.error(f"{dst_item}")
-                raise SwiftError(
-                    dst_item["error"],
-                    container_dst,
-                    dst_item["object"],
-                    dst_item["segment_index"],
-                )
+        try:
+            # test if segmented large object: https://docs.openstack.org/swift/newton/overview_large_objects.html
+            if dst_item["action"] == "upload_object":
+                logging.info(f"  uploading: {dst_item['object']}")
+                logging.debug(f"{dst_item}")
+            if not dst_item["success"]:
+                if "object" in dst_item:
+                    logging.error(f"{dst_item}")
+                    raise SwiftError(dst_item["error"], container_dst, dst_item["object"])
+                # Swift segmented object
+                elif "for_object" in dst_item:
+                    logging.error(f"{dst_item}")
+                    raise SwiftError(
+                        dst_item["error"],
+                        container_dst,
+                        dst_item["object"],
+                        dst_item["segment_index"],
+                    )
 
-        if dst_item["action"] == "upload_object" and os.path.isfile(dst_item["path"]):
-            # test upload file against Swift header etag to verify
-            checksums = validate_checksum(
-                dst_item["path"],
-                dst_item["response_dict"]["headers"]["etag"],
-                dst_item["object"],
-            )
-            # log upload
-            logging.debug(f"swift stat - [{dst_item}]")
-            if db_writer:
-                log_upload(
-                    db_writer,
-                    dst_item,
-                    container_dst,
-                    checksums,
-                    os.getenv("OS_USERNAME"),
+            if dst_item["action"] == "upload_object" and os.path.isfile(dst_item["path"]):
+                # test upload file against Swift header etag to verify
+                checksums = validate_checksum(
+                    dst_item["path"],
+                    dst_item["response_dict"]["headers"]["etag"],
+                    dst_item["object"],
                 )
+                # log upload
+                logging.debug(f"swift stat - [{dst_item}]")
+                if db_writer:
+                    log_upload(
+                        db_writer,
+                        dst_item,
+                        container_dst,
+                        checksums,
+                        os.getenv("OS_USERNAME"),
+                    )
+        except Exception as e:
+            logging.error(f"swift stat - [{dst_item}]")
+            logging.error(f"{e}")
+
+
 
 
 #
