@@ -76,8 +76,7 @@ jobs:
         id: build-and-push
         uses: docker/bake-action@v5 #v5.3.0
         with:
-          # push: ${{ github.event_name != 'pull_request' }}
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           load: true
           #provenance: true
           #sbom: true
