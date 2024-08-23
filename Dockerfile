@@ -5,7 +5,7 @@ ARG BAGGER_TAG
 # ---------------------------
 # Base build layer
 # ---------------------------
-FROM --platform=$BUILDPLATFORM ${BAGGER_REPOSITORY:-ghcr.io/cwrc}/isle-bagger:${BAGGER_TAG} as base
+FROM isle_bagger as base
 
 # Install packages and tools that allow for basic python install.
 # python-keystoneclient requirements
@@ -47,7 +47,7 @@ RUN \
 # Production layer
 # ---------------------------
 
-FROM --platform=$BUILDPLATFORM ${BAGGER_REPOSITORY:-ghcr.io/cwrc}/isle-bagger:${BAGGER_TAG:-v0.0.4} as prod
+FROM isle_bagger as prod
 
 # Install packages and tools that allow for basic downloads.
 # cleanup unused base image components
