@@ -80,7 +80,7 @@ def validate(node_list, swift_container):
                         logging.error(
                             (
                                 f"id:[{aip_id}] - mismatched modification timestamp [{src_value['changed']}]"
-                                " : {dst['headers']['x-object-meta-last-mod-timestamp']}"
+                                f" : {dst['headers']['x-object-meta-last-mod-timestamp']}"
                             )
                         )
                         break
@@ -167,7 +167,9 @@ def upload(swift_conn_dst, dst_objs, container_dst, db_writer=None):
             if not dst_item["success"]:
                 if "object" in dst_item:
                     logging.error(f"{dst_item}")
-                    raise SwiftError(dst_item["error"], container_dst, dst_item["object"])
+                    raise SwiftError(
+                        dst_item["error"], container_dst, dst_item["object"]
+                    )
                 # Swift segmented object
                 elif "for_object" in dst_item:
                     logging.error(f"{dst_item}")
@@ -178,7 +180,9 @@ def upload(swift_conn_dst, dst_objs, container_dst, db_writer=None):
                         dst_item["segment_index"],
                     )
 
-            if dst_item["action"] == "upload_object" and os.path.isfile(dst_item["path"]):
+            if dst_item["action"] == "upload_object" and os.path.isfile(
+                dst_item["path"]
+            ):
                 # test upload file against Swift header etag to verify
                 checksums = validate_checksum(
                     dst_item["path"],
@@ -198,8 +202,6 @@ def upload(swift_conn_dst, dst_objs, container_dst, db_writer=None):
         except Exception as e:
             logging.error(f"swift stat - [{dst_item}]")
             logging.error(f"{e}")
-
-
 
 
 #

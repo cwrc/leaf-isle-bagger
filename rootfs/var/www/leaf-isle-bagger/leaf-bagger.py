@@ -81,12 +81,13 @@ def process(args, session):
         # get a list of Drupal Node IDs changed since a given optional date
         # or a single node then force update
         node_list = drupalUtilities.id_list_from_nodes(session, args)
-        logging.info(node_list)
+        logging.info(f"AIP: Drupal nodes before media inclusion - {node_list}")
+
         # inspect Drupal Media for changes
         # a Media change is does not transitively change the associated Node change timestamp)
         # if Media changed then add associated Node ID to the list
         drupalUtilities.id_list_merge_with_media(session, args, node_list)
-        logging.info(f"Drupal nodes with media changes - {node_list}")
+        logging.info(f"AIP: Drupal nodes with media changes - {node_list}")
 
     # create archival information packages
     logging.info("Create AIPs")

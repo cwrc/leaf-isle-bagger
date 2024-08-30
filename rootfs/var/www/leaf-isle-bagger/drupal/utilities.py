@@ -75,15 +75,18 @@ def id_list_merge_with_media(session, args, node_list):
         else:
             for media in media_json:
                 media_of = None
+
                 if (
                     "field_media_of" in media
                     and len(media["field_media_of"]) >= 1
                     and "target_id" in media["field_media_of"][0]
                 ):
                     media_of = media["field_media_of"][0]["target_id"]
+
                 media_changed = (
                     media["changed"][0]["value"] if ("changed" in media) else None
                 )
+
                 if (
                     media_of is not None
                     and media_changed is not None

@@ -118,3 +118,37 @@ def test_drupal_media_change_without_node(mocker):
     drupalUtilities.id_list_merge_with_media(_session, args, node_list)
     assert node_list[1]
     assert node_list[1]["changed"] == "2025-01-01"
+
+
+# When node is updated the associated media is not updated;
+# test that the date list captures the media date not the node date
+def test_drupal_node_change_without_media(mocker):
+    mocker.patch(
+        "argparse.ArgumentParser.parse_args",
+        return_value=argparse.Namespace(date="2023-01-01", server="http://example.com"),
+    )
+    args = argparse.ArgumentParser.parse_args()
+    _adapter.register_uri(
+        "GET",
+        f"{args.server}/{drupalApi.node_view_endpoint(page='0', date_filter=args.date)}",
+        text='[ { "nid" : [{"value": 1}], "changed" : [{"value": "2025-01-02"}] } ]',
+    )
+    _adapter.register_uri(
+        "GET",
+        f"{args.server}/{drupalApi.node_view_endpoint(page='1', date_filter=args.date)}",
+        text="[]",
+    )
+    _adapter.register_uri(
+        "GET",
+        f"{args.server}/{drupalApi.media_view_endpoint(page='0', date_filter=args.date)}",
+        text='[ { "changed": [{"value": "2024-01-01"}], "field_media_of": [{"target_id": 1}] } ]',
+    )
+    _adapter.register_uri(
+        "GET",
+        f"{args.server}/{drupalApi.media_view_endpoint(page='1', date_filter=args.date)}",
+        text="[]",
+    )
+    node_list = drupalUtilities.id_list_from_nodes(_session, args)
+    drupalUtilities.id_list_merge_with_media(_session, args, node_list)
+    assert node_list[1]
+    assert node_list[1]["changed"] == "2025-01-02"
