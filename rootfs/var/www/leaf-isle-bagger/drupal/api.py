@@ -11,13 +11,13 @@ from urllib.parse import urljoin
 def init_session(args, username, password):
 
     session = requests.Session()
-    #session.auth = (username, password)
+    # session.auth = (username, password)
 
-    auth_endpoint = 'user/login?_format=json'
+    auth_endpoint = "user/login?_format=json"
     response = session.post(
-      urljoin(args.server, auth_endpoint),
-      json={"name": username, 'pass': password},
-      headers={'Content-Type': 'application/json'}
+        urljoin(args.server, auth_endpoint),
+        json={"name": username, "pass": password},
+        headers={"Content-Type": "application/json"},
     )
     response.raise_for_status()
 
