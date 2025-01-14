@@ -82,4 +82,4 @@ services:
     volumes:
       - ${LOCAL_AIP_DIR:-bagger-data}:${BAGGER_OUTPUT_DIR:-/var/www/bagger/var/output}
       - bagger-log:/var/www/bagger/var/log
-      - leaf-log:${LEAF_BAGGER_OUTPUT_DIR}
+      - leaf-log:${LEAF_BAGGER_OUTPUT_DIR:-/var/www/bagger/var/output}

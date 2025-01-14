@@ -2,7 +2,7 @@ variable "ISLE_BAGGER_REGISTRY" {
     default = "ghcr.io/cwrc"
     }
 variable "ISLE_BAGGER_VERSION" {
-    default = "v0.0.6@sha256:048c902f434d7947a4302dbb0d09941f792633ec21bfe0fc118cef7ca4db2ca3"
+    default = "v0.0.7@sha256:5b8b2826833993255c8cccd1124b109a0fda9e000a4d4a3726f744a7868c60d8"
     }
 
 ###############################################################################
@@ -22,6 +22,13 @@ target "common" {
 # have to declare an empty target named docker-metadata-action and inherit from it.
 target "docker-metadata-action" {}
 
+###############################################################################
+# Groups
+###############################################################################
+
+group "default" {
+  targets = ["leaf-bagger"]
+}
 
 ###############################################################################
 # Target.
@@ -37,5 +44,5 @@ target "leaf-bagger" {
     isle_bagger = "docker-image://${ISLE_BAGGER_REGISTRY}/isle-bagger:${ISLE_BAGGER_VERSION}"
     #isle_bagger = "docker-image://ISLE_BAGGER_REGISTRY}/drupal:${ISLE_BAGGER_VERSION}"
     #BAGGER_TAG = "v0.0.5@sha256:4e05219adb36595ddfc51fee33a35ead45fced6b01f57e157bcc01d2608a4aae"
-  } 
+  }
 }
