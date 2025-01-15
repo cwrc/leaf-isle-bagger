@@ -125,6 +125,7 @@ def create_aip(node_list, bagger_app_path):
                 stderr=subprocess.STDOUT,
                 check=True,
                 cwd=bagger_app_path,
+                text=True,
             )
         except subprocess.CalledProcessError as e:
             logging.error(f"{e}")
