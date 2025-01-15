@@ -118,6 +118,7 @@ def main():
     args = parse_args()
 
     logging.basicConfig(level=args.logging_level)
+    logging.getLogger('swiftclient').setLevel(logging.CRITICAL)
 
     username, password = drupalUtilities.get_drupal_credentials()
 

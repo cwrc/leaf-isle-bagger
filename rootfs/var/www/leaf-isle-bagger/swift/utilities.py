@@ -27,6 +27,10 @@ def generate_aip_path(aip_dir, id):
     return f"{aip_dir}/{generate_aip_id(id)}"
 
 
+def aip_exists(aip_path):
+    return os.path.exists(aip_path)
+
+
 #
 def upload_aip(node_list, aip_dir, swift_options, container_dst, database_csv):
 
@@ -37,20 +41,26 @@ def upload_aip(node_list, aip_dir, swift_options, container_dst, database_csv):
             for key, item_values in node_list.items():
                 aip_path = generate_aip_path(aip_dir, key)
                 aip_id = generate_aip_id(key)
-                logging.info(f"  adding to upload: {aip_path}")
-                checksums = file_checksum(aip_path)
-                item_options = {
-                    "header": {
-                        "x-object-meta-sha256sum": checksums["sha256sum"],
-                        "x-object-meta-last-mod-timestamp": item_values["changed"],
-                        "content-type": item_values["content_type"],
+                if aip_exists(aip_path):
+                    logging.info(f"  adding to upload: {aip_path}")
+                    checksums = file_checksum(aip_path)
+                    item_options = {
+                        "header": {
+                            "x-object-meta-sha256sum": checksums["sha256sum"],
+                            "x-object-meta-last-mod-timestamp": item_values["changed"],
+                            "content-type": item_values["content_type"],
+                        }
                     }
-                }
-                dst_objs.append(
-                    build_swift_upload_object(
-                        aip_id, aip_path, swift_options, item_options
+                    dst_objs.append(
+                        build_swift_upload_object(
+                            aip_id, aip_path, swift_options, item_options
+                        )
                     )
-                )
+                else:
+                    logging.error(f"  Failed to find: {aip_path}")
+                    # delete from the nodelist so not used in subsequent steps
+                    node_list[key] = None
+
             # May need to be split into batches of "x" if memory usage is too high
             upload(swift_conn_dst, dst_objs, container_dst, db_writer)
             os.fsync(db_file)
@@ -63,31 +73,35 @@ def validate(node_list, swift_container):
         for key, src_value in node_list.items():
             aip_id = generate_aip_id(key)
             logging.info(f"  Validating: {aip_id}")
-            swift_stat = swift_conn_dst.stat(swift_container, [aip_id])
-            if swift_stat:
-                for dst in swift_stat:
-                    logging.debug(f"{dst}")
-                    if dst["success"] is False:
-                        logging.error(
-                            f"id:[{aip_id}] - preservation error [{dst['error']}]"
-                        )
-                        logging.error(f"id:[{aip_id}] - swift stat - [{dst}]")
-                        break
-                    elif (
-                        src_value["changed"]
-                        != dst["headers"]["x-object-meta-last-mod-timestamp"]
-                    ):
-                        logging.error(
-                            (
-                                f"id:[{aip_id}] - mismatched modification timestamp [{src_value['changed']}]"
-                                f" : {dst['headers']['x-object-meta-last-mod-timestamp']}"
+            try:
+                swift_stat = swift_conn_dst.stat(swift_container, [aip_id])
+            except Exception as e:
+                logging.error(f"swift stat - [{aip_id}]")
+                logging.error(f"{e}")
+            finally:
+                if swift_stat:
+                    for dst in swift_stat:
+                        logging.debug(f"{dst}")
+                        if dst["success"] is False:
+                            logging.error(
+                                f"id:[{aip_id}] - preservation error [{dst['error']}]"
                             )
-                        )
-                        break
-            else:
-                logging.error(
-                    f"key:[{aip_id}] - not present in destination: {swift_stat}"
-                )
+                            break
+                        elif (
+                            src_value["changed"]
+                            != dst["headers"]["x-object-meta-last-mod-timestamp"]
+                        ):
+                            logging.error(
+                                (
+                                    f"id:[{aip_id}] - mismatched modification timestamp [{src_value['changed']}]"
+                                    f" : {dst['headers']['x-object-meta-last-mod-timestamp']}"
+                                )
+                            )
+                            break
+                else:
+                    logging.error(
+                        f"key:[{aip_id}] - not present in destination: {swift_stat}"
+                    )
 
 
 def log_init(fd):
@@ -200,7 +214,7 @@ def upload(swift_conn_dst, dst_objs, container_dst, db_writer=None):
                         os.getenv("OS_USERNAME"),
                     )
         except Exception as e:
-            logging.error(f"swift stat - [{dst_item}]")
+            logging.error(f"swift upload - [{dst_item}]")
             logging.error(f"{e}")
 
 
