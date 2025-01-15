@@ -29,6 +29,12 @@ def parse_args():
         "--output", required=True, help="Location to store CSV output file."
     )
     parser.add_argument(
+        "--error_log",
+        required=False,
+        default=None,
+        help="Location to store error logs.",
+    )
+    parser.add_argument(
         "--date", required=False, help="Items changed after the given date."
     )
     parser.add_argument(
@@ -117,8 +123,14 @@ def main():
 
     args = parse_args()
 
-    logging.basicConfig(level=args.logging_level)
-    logging.getLogger('swiftclient').setLevel(logging.CRITICAL)
+    # Create logging handlers
+    logging_handlers = [logging.StreamHandler()]
+    if args.error_log is not None:
+        logging_handlers.append(logging.FileHandler(args.error_log))
+
+    # Config Logging
+    logging.basicConfig(level=args.logging_level, handers=logging_handlers)
+    logging.getLogger("swiftclient").setLevel(logging.CRITICAL)
 
     username, password = drupalUtilities.get_drupal_credentials()
 

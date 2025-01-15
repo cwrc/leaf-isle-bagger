@@ -205,6 +205,22 @@ Note: if wanting to test [leaf-isle-bagger] and [isle-bagger] locally
 
 See the following as an alternative to specifying an OCI image registry and tag in the Dockerfile: <https://docs.docker.com/build/bake/reference/>. As an example, see [isle-buildkit] `docker-bake.hcl`.
 
+## FAQ
+
+### Debugging from the audit log:
+
+``` bash
+tmp=$(grep x /data/leaf-bagger/_leaf_bagger_audit_2025-01-03T_15-08-06.csv  | head -15 | cut -d ',' -f1 | tr '\n' ' ')
+for item in $tmp; do
+    ./venv/bin/python3 leaf-bagger.py \
+      --server ${BAGGER_DRUPAL_URL} \
+      --output /tmp/z.csv \
+      --force_single_node ${item} \
+      --container cwrc-test \
+      ;
+done
+```
+
 ---
 
 [isle-bagger]: https://github.com/cwrc/isle-bagger
