@@ -113,20 +113,22 @@ def create_aip(node_list, bagger_app_path):
         # https://docs.python.org/3/library/subprocess.html
         logging.info(f"  Generating AIP: {node}")
         try:
-            subprocess.run(
+            ret = subprocess.run(
                 [
                     "./bin/console",
                     "app:islandora_bagger:create_bag",
-                    "-vvv",
                     "--settings=var/sample_per_bag_config.yaml",
                     f"--node={node}",
                 ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                check=True,
+                check=False,
                 cwd=bagger_app_path,
                 text=True,
             )
+            if ret.returncode != 0:
+                logging.critical(f"{ret.stdout}")
+                ret.check_returncode()
         except subprocess.CalledProcessError as e:
             logging.error(f"{e}")
         except Exception as e:

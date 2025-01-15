@@ -129,7 +129,7 @@ def main():
         logging_handlers.append(logging.FileHandler(args.error_log))
 
     # Config Logging
-    logging.basicConfig(level=args.logging_level, handers=logging_handlers)
+    logging.basicConfig(level=args.logging_level, handlers=logging_handlers)
     logging.getLogger("swiftclient").setLevel(logging.CRITICAL)
 
     username, password = drupalUtilities.get_drupal_credentials()
