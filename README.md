@@ -215,11 +215,11 @@ To retry problem items:
 
 ``` bash
 #
-tmp=$(grep -E "(x[mtw]|x[md])\r?$" /data/leaf-bagger/_leaf_bagger_audit_2025-01-03T_15-08-06.csv  | head -30 | cut -d ',' -f1 | tr '\n' ' ')
+tmp=$(grep -E "(s[mtw]|x[md])\r?$" /data/leaf-bagger/_leaf_bagger_audit_2025-01-03T_15-08-06.csv  | head -30 | cut -d ',' -f1 | tr '\n' ' ')
 for item in $tmp; do
     ./venv/bin/python3 leaf-bagger.py \
       --server ${BAGGER_DRUPAL_URL} \
-      --output /tmp/z.csv \
+      --output /tmp/force_single_node_${item}_$(date +"%Y-%m-%dT_%H-%M-%S").csv \
       --force_single_node ${item} \
       --container ${OS_CONTAINER} \
       --error_log /tmp/error-$(date +"%Y-%m-%dT_%H-%M-%S").log \
