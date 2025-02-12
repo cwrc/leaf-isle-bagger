@@ -80,18 +80,23 @@ def process(args, session):
     # a list of resources to preserve
     node_list = {}
 
+    # get a list of Drupal Node IDs either from specified ID or via a list
     if args.force_single_node:
         node_list = drupalUtilities.id_list_from_arg(session, args)
-        logging.info(node_list)
+        logging.info(f"AIP: Drupal node before media inclusion - {node_list}")
+        # inspect associated Drupal Media for changes
+        # a Media change does not transitively update the associated Node change timestamp
+        # if Media changed but not the associated Node then add associated Node ID to the list
+        drupalUtilities.single_node_merge_with_media(session, args.server, node_list, args.force_single_node)
+        logging.info(f"AIP: Drupal node with media changes - {node_list}")
     else:
         # get a list of Drupal Node IDs changed since a given optional date
         # or a single node then force update
         node_list = drupalUtilities.id_list_from_nodes(session, args)
         logging.info(f"AIP: Drupal nodes before media inclusion - {node_list}")
-
-        # inspect Drupal Media for changes
-        # a Media change is does not transitively change the associated Node change timestamp)
-        # if Media changed then add associated Node ID to the list
+        # inspect associated Drupal Media for changes
+        # a Media change does not transitively update the associated Node change timestamp)
+        # if Media changed but not the associated Node then add associated Node ID to the list
         drupalUtilities.id_list_merge_with_media(session, args, node_list)
         logging.info(f"AIP: Drupal nodes with media changes - {node_list}")
 

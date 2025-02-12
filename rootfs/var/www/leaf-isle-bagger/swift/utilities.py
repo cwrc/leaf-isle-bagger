@@ -93,8 +93,8 @@ def validate(node_list, swift_container):
                         ):
                             logging.error(
                                 (
-                                    f"id:[{aip_id}] - mismatched modification timestamp [{src_value['changed']}]"
-                                    f" : {dst['headers']['x-object-meta-last-mod-timestamp']}"
+                                    f"id:[{aip_id}] - mismatched modification timestamp local[{src_value['changed']}]"
+                                    f" : swift[{dst['headers']['x-object-meta-last-mod-timestamp']}]"
                                 )
                             )
                             break

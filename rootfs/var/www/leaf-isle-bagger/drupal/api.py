@@ -65,3 +65,14 @@ def get_node_by_format(session, server, item_id):
     )
     response.raise_for_status()
     return response
+
+def media_associated_with_node_endpoint(id):
+    return f"node/{id}/media?_format=json"
+
+#
+def get_associated_media_by_format(session, server, id):
+    response = session.get(
+        urljoin(server, media_associated_with_node_endpoint(id))
+    )
+    response.raise_for_status()
+    return response
