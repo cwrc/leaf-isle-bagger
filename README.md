@@ -73,7 +73,7 @@ Result: a report of items added to the preservation endpoint.
 **ToDo:** what if a small percentage of items in a preservation run fail?
 
 * option 1.: enhancement: script CLI argument specifying a list of item IDs to preserve thus overriding the REST request to the repository
-  * May 2024: `force_single_node` option added
+  * May 2024: `--force_single_node` option added
 * option 2.: enhancement: only generate AIP and upload if the preservation endpoint is missing the item or is stale/outdated
 * option 3.: run the [islandora-bagger] CLI outside the scripting (downside: loss of the report)
   * from within the container: `cd ${BAGGER_APP_DIR} && ./bin/console app:islandora_bagger:create_bag -vvv --settings=var/sample_per_bag_config.yaml --node=${drupal_node_id}`
@@ -226,6 +226,11 @@ for item in $tmp; do
       ;
 done
 ```
+
+### Enhancements
+
+* If a Drupal Media item is not attached to a Drupal Node then the Drupal Media will **not** be preserved (in 2024).
+* If a Drupal Node has multiple Drupal Media associations with the same filename then the preservation will fail: <https://github.com/cwrc/leaf-isle-bagger/issues/28>
 
 ---
 
