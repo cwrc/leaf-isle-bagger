@@ -60,6 +60,29 @@ def id_list_from_arg(session, args):
     return node_list
 
 
+# Query Media because media updates are not reflected in associated Node change timestamps 
+# exclude Drupal Media not attached to a Drupal Node
+# Apply only to the single node case
+def single_node_merge_with_media(session, server, node_list, node_id):
+
+    try:
+        node_id = node_id if isinstance(node_id, int) else int(node_id)
+    except ValueError:
+        logging.error(f"Invalid node id {node_id}")
+    else:
+        # Get assocaiated Media
+        associated_media_json = drupalApi.get_associated_media_by_format(session, server, node_id)
+        associated_media = json.loads(associated_media_json.content)
+        for media in associated_media:
+            media_changed = media["changed"][0]["value"] if ("changed" in media) else None
+            node = node_list.get(node_id, None)
+            if media_changed is not None and node is not None and node["changed"] < media_changed:
+                # media changed but the parent node did not change
+                node_list[node_id]["changed"] = media_changed
+                logging.info(f"  Updating node list changed date : {node_list}")                           
+
+
+
 # query media as media changes are not reflected as node revisions
 # exclude Drupal Media not attached to a Drupal Node
 def id_list_merge_with_media(session, args, node_list):

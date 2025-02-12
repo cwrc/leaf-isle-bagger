@@ -152,3 +152,23 @@ def test_drupal_node_change_without_media(mocker):
     drupalUtilities.id_list_merge_with_media(_session, args, node_list)
     assert node_list[1]
     assert node_list[1]["changed"] == "2025-01-02"
+
+
+# Test the update of a single node with associated media 
+# test that the date list captures the media date not the node date
+def test_drupal_node_change_without_media(mocker):
+    node_id = 9999
+    node_list = {9999: {'changed': '2022-05-18T13:35:49+00:00', 'content_type': 'application/zip'}}
+    mocker.patch(
+        "argparse.ArgumentParser.parse_args",
+        return_value=argparse.Namespace(force_single_node=node_id, server="http://example.com"),
+    )
+    args = argparse.ArgumentParser.parse_args()
+    _adapter.register_uri(
+        "GET",
+        f"{args.server}/{drupalApi.media_associated_with_node_endpoint(node_id)}",
+        text='[ { "changed": [{"value": "2022-05-18T13:35:52+00:00"}], "field_media_of": [{"target_id": 9999}] } ]',
+    )
+    drupalUtilities.single_node_merge_with_media(_session, args.server, node_list, args.force_single_node)
+    assert node_list[node_id]
+    assert node_list[node_id]["changed"] == "2022-05-18T13:35:52+00:00"
