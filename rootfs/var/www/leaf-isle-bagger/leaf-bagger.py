@@ -87,7 +87,9 @@ def process(args, session):
         # inspect associated Drupal Media for changes
         # a Media change does not transitively update the associated Node change timestamp
         # if Media changed but not the associated Node then add associated Node ID to the list
-        drupalUtilities.single_node_merge_with_media(session, args.server, node_list, args.force_single_node)
+        drupalUtilities.single_node_merge_with_media(
+            session, args.server, node_list, args.force_single_node
+        )
         logging.info(f"AIP: Drupal node with media changes - {node_list}")
     else:
         # get a list of Drupal Node IDs changed since a given optional date
