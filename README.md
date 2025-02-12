@@ -72,8 +72,8 @@ Result: a report of items added to the preservation endpoint.
 
 **ToDo:** what if a small percentage of items in a preservation run fail?
 
-* option 1.: enhancement: script CLI argument specifying a list of item IDs to preserve thus overriding the REST request to the repository
-  * May 2024: `--force_single_node` option added
+* Option 1.: enhancement: script CLI argument specifying a list of item IDs to preserve thus overriding the REST request to the repository
+  * **May 2024: See [Debugging error in the audit log](#debugging-errors-in-the-audit-log) to describe the single item preservation workflow via `--force_single_node` command-line argument**
 * option 2.: enhancement: only generate AIP and upload if the preservation endpoint is missing the item or is stale/outdated
 * option 3.: run the [islandora-bagger] CLI outside the scripting (downside: loss of the report)
   * from within the container: `cd ${BAGGER_APP_DIR} && ./bin/console app:islandora_bagger:create_bag -vvv --settings=var/sample_per_bag_config.yaml --node=${drupal_node_id}`
@@ -207,7 +207,7 @@ See the following as an alternative to specifying an OCI image registry and tag 
 
 ## FAQ
 
-### Debugging errors in the the audit log
+### Debugging errors in the audit log
 
 An error log file is created (along with errors written to stdout) and located in the audit directory.
 
@@ -220,9 +220,9 @@ for item in $tmp; do
     ./venv/bin/python3 leaf-bagger.py \
       --server ${BAGGER_DRUPAL_URL} \
       --output /tmp/force_single_node_${item}_$(date +"%Y-%m-%dT_%H-%M-%S").csv \
-      --force_single_node ${item} \
       --container ${OS_CONTAINER} \
-      --error_log /tmp/error-$(date +"%Y-%m-%dT_%H-%M-%S").log \
+      --error_log /date/leaf-bagger/error-$(date +"%Y-%m-%dT_%H-%M-%S").log \
+      --force_single_node ${item} \
       ;
 done
 ```
