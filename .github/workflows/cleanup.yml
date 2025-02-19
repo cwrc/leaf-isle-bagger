@@ -1,0 +1,36 @@
+name: Cleanup actions
+
+on:
+  schedule:
+    - cron: '39 23 * * 1'
+  # manual
+  workflow_dispatch:
+
+env:
+
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: ghcr.io
+
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+
+permissions:
+  packages: write
+
+
+jobs:
+
+  GHCR-io-cleanup-action:
+
+    runs-on: ubuntu-latest
+    steps:
+      # https://github.com/marketplace/actions/ghcr-io-cleanup-action
+      - uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # https://github.com/dataaxiom/ghcr-cleanup-action?tab=readme-ov-file
+          older-than: 6 months 
+          keep-n-tagged: 5
+          delete-untagged: true
+          dry-run: false 
+
