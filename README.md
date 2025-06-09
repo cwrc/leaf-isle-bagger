@@ -169,6 +169,7 @@ Two docker-compose secrets are also used
 
 | Secret                                 | Description             |
 |:---------------------------------------|:------------------------|
+| BAGGER_DRUPAL_DEFAULT_ACCOUNT_NAME     | Drupal site username    |
 | BAGGER_DRUPAL_DEFAULT_ACCOUNT_PASSWORD | Drupal site password    |
 | OS_PASSWORD                            | OpenStack user password |
 
@@ -209,6 +210,12 @@ See the following as an alternative to specifying an OCI image registry and tag 
 
 ### Debugging errors in the audit log
 
+Use of the virtual environment to run Python
+
+``` bash
+./venv/bin/python
+```
+
 An error log file is created (along with errors written to stdout) and located in the audit directory.
 
 To retry problem items:
@@ -225,6 +232,12 @@ for item in $tmp; do
       --force_single_node ${item} \
       ;
 done
+```
+
+Test Swift cli
+
+``` bash
+./venv/bin/swift stat ${OS_CONTAINER}
 ```
 
 ### Enhancements
