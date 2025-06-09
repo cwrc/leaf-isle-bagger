@@ -228,7 +228,7 @@ for item in $tmp; do
       --server ${BAGGER_DRUPAL_URL} \
       --output /tmp/force_single_node_${item}_$(date +"%Y-%m-%dT_%H-%M-%S").csv \
       --container ${OS_CONTAINER} \
-      --error_log /date/leaf-bagger/error-$(date +"%Y-%m-%dT_%H-%M-%S").log \
+      --error_log /data/leaf-bagger/error-$(date +"%Y-%m-%dT_%H-%M-%S").log \
       --force_single_node ${item} \
       ;
 done
@@ -237,7 +237,7 @@ done
 Test Swift cli
 
 ``` bash
-./venv/bin/swift stat ${OS_CONTAINER}
+./venv/bin/swift stat ${OS_CONTAINER} ${ID}
 ```
 
 ### Enhancements
