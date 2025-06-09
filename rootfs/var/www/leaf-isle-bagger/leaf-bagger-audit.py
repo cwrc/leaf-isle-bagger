@@ -41,7 +41,11 @@ def parse_args():
         default=0.1,
     )
     parser.add_argument(
-        "--logging_level", required=False, help="Logging level.", default=logging.INFO
+        "--logging_level",
+        required=False,
+        help="Logging level DEBUG|INFO|ERROR.",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
     )
     parser.add_argument(
         "--bagger_app_dir",
@@ -77,7 +81,12 @@ def main():
 
     args = parse_args()
 
-    logging.basicConfig(level=args.logging_level)
+    # Configure logging
+    log_level = getattr(logging, args.logging_level.upper(), None)
+    if not isinstance(log_level, int):
+        raise ValueError(f"Invalid log level: {args.log}")
+    # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+    logging.getLogger().setLevel(log_level)
 
     username, password = drupalUtilities.get_drupal_credentials()
 
