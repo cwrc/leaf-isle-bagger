@@ -37,7 +37,7 @@ def id_list_from_nodes(session, args):
     while True:
         node = drupalApi.get_node_list(session, args.server, page, args.date)
         node_json = json.loads(node.content)
-        logging.debug(f"Page %s of node content: %s", page, node_json)
+        logging.debug("Page %s of node content: %s", page, node_json)
 
         if len(node_json) == 0:
             # no more pages
@@ -99,7 +99,7 @@ def id_list_merge_with_media(session, args, node_list):
     while True:
         media = drupalApi.get_media_list(session, args.server, page, args.date)
         media_json = json.loads(media.content)
-        logging.debug(f"Page %s of media content: %s", page, media_json)
+        logging.debug("Page %s of media content: %s", page, media_json)
 
         if len(media_json) == 0:
             # no more pages
