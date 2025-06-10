@@ -240,6 +240,12 @@ Test Swift cli
 ./venv/bin/swift stat ${OS_CONTAINER} ${ID}
 ```
 
+Test number of items in the audit report (based on the Drupal View: Content). The preservation views were missing items (see issue [354](https://gitlab.com/calincs/cwrc/leaf/leaf-base-i8/-/issues/354)).
+
+``` SQL
+SELECT count(*) FROM node_field_data as node_field_data
+```
+
 ### Enhancements
 
 * If a Drupal Media item is not attached to a Drupal Node then the Drupal Media will **not** be preserved (in 2024).
