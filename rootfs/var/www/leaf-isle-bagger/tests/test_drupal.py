@@ -49,7 +49,7 @@ def test_drupal_node_change_view(mocker):
     _adapter.register_uri(
         "GET",
         f"{args.server}/{drupalApi.node_view_endpoint(page='0', date_filter=args.date)}",
-        text='[ { "nid" : [{"value": 1}], "changed" : [{"value": "2024-01-01"}] } ]',
+        text='[ { "nid" : "1", "changed" : "1704067200" } ]',
     )
     _adapter.register_uri(
         "GET",
@@ -57,8 +57,8 @@ def test_drupal_node_change_view(mocker):
         text="[]",
     )
     node_list = drupalUtilities.id_list_from_nodes(_session, args)
-    assert node_list[1]
-    assert node_list[1]["changed"] == "2024-01-01"
+    assert node_list["1"]
+    assert node_list["1"]["changed"] == "2024-01-01T00:00:00+00:00"
 
 
 # Test the Drupal media change view reader
@@ -71,7 +71,7 @@ def test_drupal_media_change_view(mocker):
     _adapter.register_uri(
         "GET",
         f"{args.server}/{drupalApi.media_view_endpoint(page='0', date_filter=args.date)}",
-        text='[ { "changed": [{"value": "2025-01-01"}], "field_media_of": [{"target_id": 1}] } ]',
+        text='[ { "changed": "1735689600", "field_media_of": "1" } ]',
     )
     _adapter.register_uri(
         "GET",
@@ -82,8 +82,8 @@ def test_drupal_media_change_view(mocker):
     print(node_list)
     drupalUtilities.id_list_merge_with_media(_session, args, node_list)
     print(node_list)
-    assert node_list[1]
-    assert node_list[1]["changed"] == "2025-01-01"
+    assert node_list["1"]
+    assert node_list["1"]["changed"] == "2025-01-01T00:00:00+00:00"
 
 
 # When media is updated the associated node is not updated;
@@ -97,7 +97,7 @@ def test_drupal_media_change_without_node(mocker):
     _adapter.register_uri(
         "GET",
         f"{args.server}/{drupalApi.node_view_endpoint(page='0', date_filter=args.date)}",
-        text='[ { "nid" : [{"value": 1}], "changed" : [{"value": "2024-01-01"}] } ]',
+        text='[ { "nid" : "1", "changed" : "1704067200" } ]',
     )
     _adapter.register_uri(
         "GET",
@@ -107,7 +107,7 @@ def test_drupal_media_change_without_node(mocker):
     _adapter.register_uri(
         "GET",
         f"{args.server}/{drupalApi.media_view_endpoint(page='0', date_filter=args.date)}",
-        text='[ { "changed": [{"value": "2025-01-01"}], "field_media_of": [{"target_id": 1}] } ]',
+        text='[ { "changed": "1735689600", "field_media_of": "1" } ]',
     )
     _adapter.register_uri(
         "GET",
@@ -116,8 +116,8 @@ def test_drupal_media_change_without_node(mocker):
     )
     node_list = drupalUtilities.id_list_from_nodes(_session, args)
     drupalUtilities.id_list_merge_with_media(_session, args, node_list)
-    assert node_list[1]
-    assert node_list[1]["changed"] == "2025-01-01"
+    assert node_list["1"]
+    assert node_list["1"]["changed"] == "2025-01-01T00:00:00+00:00"
 
 
 # When node is updated the associated media is not updated;
@@ -131,7 +131,7 @@ def test_drupal_node_change_without_media(mocker):
     _adapter.register_uri(
         "GET",
         f"{args.server}/{drupalApi.node_view_endpoint(page='0', date_filter=args.date)}",
-        text='[ { "nid" : [{"value": 1}], "changed" : [{"value": "2025-01-02"}] } ]',
+        text='[ { "nid" : "1", "changed" : "1735776000" } ]',
     )
     _adapter.register_uri(
         "GET",
@@ -141,7 +141,7 @@ def test_drupal_node_change_without_media(mocker):
     _adapter.register_uri(
         "GET",
         f"{args.server}/{drupalApi.media_view_endpoint(page='0', date_filter=args.date)}",
-        text='[ { "changed": [{"value": "2024-01-01"}], "field_media_of": [{"target_id": 1}] } ]',
+        text='[ { "changed": "1704067200", "field_media_of": "1" } ]',
     )
     _adapter.register_uri(
         "GET",
@@ -150,8 +150,8 @@ def test_drupal_node_change_without_media(mocker):
     )
     node_list = drupalUtilities.id_list_from_nodes(_session, args)
     drupalUtilities.id_list_merge_with_media(_session, args, node_list)
-    assert node_list[1]
-    assert node_list[1]["changed"] == "2025-01-02"
+    assert node_list["1"]
+    assert node_list["1"]["changed"] == "2025-01-02T00:00:00+00:00"
 
 
 # Test the update of a single node with associated media
@@ -160,7 +160,7 @@ def test_single_drupal_node_change_without_media(mocker):
     node_id = 9999
     node_list = {
         9999: {
-            "changed": "2022-05-18T13:35:49+00:00",
+            "changed": "1652880949",  # "changed": "2022-05-18T13:35:49+00:00",
             "content_type": "application/zip",
         }
     }
@@ -174,7 +174,7 @@ def test_single_drupal_node_change_without_media(mocker):
     _adapter.register_uri(
         "GET",
         f"{args.server}/{drupalApi.media_associated_with_node_endpoint(node_id)}",
-        text='[ { "changed": [{"value": "2022-05-18T13:35:52+00:00"}], "field_media_of": [{"target_id": 9999}] } ]',
+        text='[ { "changed": "1652880952", "field_media_of": "9999" } ]',
     )
     drupalUtilities.single_node_merge_with_media(
         _session, args.server, node_list, args.force_single_node
