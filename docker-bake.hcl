@@ -2,7 +2,7 @@ variable "ISLE_BAGGER_REGISTRY" {
     default = "ghcr.io/cwrc"
     }
 variable "ISLE_BAGGER_VERSION" {
-    default = "v0.0.11@sha256:b92887fb5035e9eb9cfbffc566d9c48d89b92ae6dd0874eb4c9f40f411234a9a"
+    default = "v0.0.12@sha256:10e4aa2ae7aec6f5bbf2a35465a95d258663ba33793cee02606d3f4795391fbf"
     }
 
 ###############################################################################
