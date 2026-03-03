@@ -116,6 +116,7 @@ def log_init(fd):
             "container_name",
             "notes",
         ],
+        lineterminator="\n"
     )
     db_writer.writeheader()
     return db_writer
@@ -238,6 +239,7 @@ def audit_init(fd):
             "swift_bytes",
             "status",
         ],
+        lineterminator="\n"
     )
     audit_writer.writeheader()
     return audit_writer
