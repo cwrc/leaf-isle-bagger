@@ -66,8 +66,8 @@ def id_list_from_arg(session, args):
     node = json.loads(node.content)
     add_to_node_list(
         node_list,
-        node["nid"],
-        drupal_to_iso8601(node["changed"]),
+        node["nid"][0]["value"],
+        node["changed"][0]["value"]
     )
     return node_list
 
@@ -89,7 +89,7 @@ def single_node_merge_with_media(session, server, node_list, node_id):
         associated_media = json.loads(associated_media_json.content)
         for media in associated_media:
             media_changed = (
-                drupal_to_iso8601(media["changed"]) if ("changed" in media) else None
+                media["changed"][0]["value"] if ("changed" in media) else None
             )
             node = node_list.get(node_id, None)
             if (
