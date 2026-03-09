@@ -64,11 +64,7 @@ def id_list_from_arg(session, args):
     node_list = {}
     node = drupalApi.get_node_by_format(session, args.server, args.force_single_node)
     node = json.loads(node.content)
-    add_to_node_list(
-        node_list,
-        node["nid"][0]["value"],
-        node["changed"][0]["value"]
-    )
+    add_to_node_list(node_list, node["nid"][0]["value"], node["changed"][0]["value"])
     return node_list
 
 

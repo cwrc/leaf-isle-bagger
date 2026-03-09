@@ -160,7 +160,7 @@ def test_single_drupal_node_change_without_media(mocker):
     node_id = 9999
     node_list = {
         9999: {
-            "changed": "1652880949",  # "changed": "2022-05-18T13:35:49+00:00",
+            "changed": "2022-05-18T13:35:49+00:00",
             "content_type": "application/zip",
         }
     }
@@ -174,7 +174,7 @@ def test_single_drupal_node_change_without_media(mocker):
     _adapter.register_uri(
         "GET",
         f"{args.server}/{drupalApi.media_associated_with_node_endpoint(node_id)}",
-        text='[ { "changed": "1652880952", "field_media_of": "9999" } ]',
+        text='[ { "changed": [{"value": "2022-05-18T13:35:52+00:00"}], "field_media_of": [{"target_id": 9999}] } ]',
     )
     drupalUtilities.single_node_merge_with_media(
         _session, args.server, node_list, args.force_single_node
