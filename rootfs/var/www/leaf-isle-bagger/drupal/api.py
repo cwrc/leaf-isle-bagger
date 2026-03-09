@@ -26,7 +26,9 @@ def init_session(args, username, password):
 
 #
 def node_view_endpoint(page=0, date_filter=""):
-    return f"views/preservation/v2/show_node_timestamps?page={page}&changed={date_filter}"
+    return (
+        f"views/preservation/v2/show_node_timestamps?page={page}&changed={date_filter}"
+    )
 
 
 #
@@ -46,7 +48,9 @@ def get_node_list(session, server, page=0, date_filter=""):
 
 #
 def media_view_endpoint(page=0, date_filter=""):
-    return f"views/preservation/v2/show_media_timestamps?page={page}&changed={date_filter}"
+    return (
+        f"views/preservation/v2/show_media_timestamps?page={page}&changed={date_filter}"
+    )
 
 
 #
