@@ -81,7 +81,7 @@ jobs:
       # https://github.com/docker/bake-action
       - name: Build and push Docker image
         id: build-and-push
-        uses: docker/bake-action@v5 #v5.3.0
+        uses: docker/bake-action@v7 #v5.3.0
         with:
           push: ${{ github.event_name != 'pull_request' }}
           load: true
