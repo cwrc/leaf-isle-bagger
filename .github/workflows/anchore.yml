@@ -56,7 +56,7 @@ jobs:
     - name: Build the Docker image
       run: docker buildx bake --set "leaf-bagger.tags=localbuild/testimage:latest"
     - name: Run the Anchore Grype scan action
-      uses: anchore/scan-action@3343887d815d7b07465f6fdcd395bd66508d486a #v3.6.4
+      uses: anchore/scan-action@7037fa011853d5a11690026fb85feee79f4c946c #v7.3.2
       id: scan
       with:
         image: "localbuild/testimage:latest"
