@@ -163,10 +163,10 @@ def create_aip(node_list, bagger_app_path):
                 cwd=bagger_app_path,
                 text=True,
             )
-            logging.error(f"  AIP generation for node: {node}\n output: {ret.stderr}")
+            logging.error(f"  AIP generation for node: {node}\n output:\n {ret.stderr}\n\n")
             if ret.returncode != 0:
-                logging.critical(f"{ret.stdout}")
-                logging.critical(f"{ret.stderr}")
+                logging.critical(f"STDOUT: {ret.stdout}")
+                logging.critical(f"STDERR: {ret.stderr}")
                 ret.check_returncode()
         except subprocess.CalledProcessError as e:
             logging.error(f"{e}")
