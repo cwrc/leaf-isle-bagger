@@ -163,7 +163,7 @@ def create_aip(node_list, bagger_app_path):
                 cwd=bagger_app_path,
                 text=True,
             )
-            logging.error(f"  AIP generation for node: {node}\n output:\n {ret.stderr}\n\n")
+            logging.info(f"  AIP generation for node: {node} stderr:\n {ret.stderr}\n\n")
             if ret.returncode != 0:
                 logging.critical(f"STDOUT: {ret.stdout}")
                 logging.critical(f"STDERR: {ret.stderr}")
