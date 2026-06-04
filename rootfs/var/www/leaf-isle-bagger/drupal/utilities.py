@@ -44,7 +44,9 @@ def id_list_from_nodes(session, args):
     while True:
         node = drupalApi.get_node_list(session, args.server, page, args.date)
         node_json = json.loads(node.content)
-        logging.debug("Page %s of node content - count[%s] - %s", page, len(node_json), node_json)
+        logging.debug(
+            "Page %s of node content - count[%s] - %s", page, len(node_json), node_json
+        )
 
         if len(node_json) == 0:
             # no more pages
@@ -106,7 +108,12 @@ def id_list_merge_with_media(session, args, node_list):
     while True:
         media = drupalApi.get_media_list(session, args.server, page, args.date)
         media_json = json.loads(media.content)
-        logging.debug("Page %s of media content - count[%s] - %s", page, len(media_json), media_json)
+        logging.debug(
+            "Page %s of media content - count[%s] - %s",
+            page,
+            len(media_json),
+            media_json,
+        )
 
         if len(media_json) == 0:
             # no more pages
@@ -163,7 +170,7 @@ def create_aip(node_list, bagger_app_path):
                 cwd=bagger_app_path,
                 text=True,
             )
-            logging.info(f"  AIP generation for node: {node} stderr:\n {ret.stderr}\n\n")
+            logging.info(f"  AIP generation for node: {node} stderr: {ret.stderr}")
             if ret.returncode != 0:
                 logging.critical(f"STDOUT: {ret.stdout}")
                 logging.critical(f"STDERR: {ret.stderr}")
