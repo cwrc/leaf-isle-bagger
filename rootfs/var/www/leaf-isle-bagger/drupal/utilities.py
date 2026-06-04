@@ -145,7 +145,17 @@ def id_list_merge_with_media(session, args, node_list):
 
 
 def add_to_node_list(node_list, id, changed):
-    node_list[id] = {"changed": changed, "content_type": "application/zip"}
+    # Node may have different languages thus appear mulpile times the the preservation node view
+    # or may have multiple media associated thus ensure always capture the latest change date for the node
+    # to ensure capture the latest version of the resource (node and associated bits) for preservation
+    if id in node_list:
+        logging.debug(
+            f"Node [{id}] exists with changed date [{node_list[id]['changed']}] - incoming change date [{changed}]"
+        )
+        if node_list[id]["changed"] < changed:
+            node_list[id]["changed"] = changed
+    else:
+        node_list[id] = {"changed": changed, "content_type": "application/zip"}
 
 
 # create archival information package
