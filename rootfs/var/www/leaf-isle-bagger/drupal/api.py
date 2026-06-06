@@ -63,6 +63,38 @@ def get_media_list(session, server, page=0, date_filter=""):
 
 
 #
+def group_view_endpoint(page=0, date_filter=""):
+    return (
+        f"views/preservation/v2/show_drupal_group/timestamps?"
+        f"page={page}&group_changed={date_filter}&group_relationship_changed={date_filter}"
+    )
+
+
+#
+def get_drupal_groups_list(session, server, page=0, date_filter=""):
+
+    response = session.get(
+        urljoin(server, group_view_endpoint(page, date_filter)),
+    )
+    response.raise_for_status()
+    return response
+
+
+#
+def group_node_view_endpoint(node_id):
+    return f"views/preservation/v2/show_drupal_groups/node/{node_id}"
+
+
+#
+def get_groups_by_node(session, server, node_id):
+    response = session.get(
+        urljoin(server, group_node_view_endpoint(node_id)),
+    )
+    response.raise_for_status()
+    return response
+
+
+#
 def get_node_by_format(session, server, item_id):
     response = session.get(
         urljoin(server, f"node/{item_id}?_format=json"),

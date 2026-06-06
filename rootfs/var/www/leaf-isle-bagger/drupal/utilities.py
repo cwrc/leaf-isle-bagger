@@ -100,6 +100,32 @@ def single_node_merge_with_media(session, server, node_list, node_id):
                 logging.info(f"  Updating node list changed date : {node_list}")
 
 
+# Query Group because media updates are not reflected in associated Node change timestamps
+# exclude Drupal Media not attached to a Drupal Node
+# Apply only to the single node case
+def single_node_merge_with_drupal_group(session, server, node_list, node_id):
+    try:
+        node_id = node_id if isinstance(node_id, int) else int(node_id)
+    except ValueError:
+        logging.error(f"Invalid node id {node_id}")
+    else:
+        # Get assocaiated Media
+        associated_json = drupalApi.get_groups_by_node(session, server, node_id)
+        associated_group = json.loads(associated_json.content)
+        for group in associated_group:
+            group_changed = get_changed_date(group)
+            node = node_list.get(node_id, None)
+
+            if (
+                group_changed is not None
+                and node is not None
+                and node["changed"] < group_changed
+            ):
+                # group changed but the parent node did not change
+                node_list[node_id]["changed"] = group_changed
+                logging.info(f"  Updating node list changed date : {node_list}")
+
+
 # query media as media changes are not reflected as node revisions
 # exclude Drupal Media not attached to a Drupal Node
 def id_list_merge_with_media(session, args, node_list):
@@ -141,6 +167,68 @@ def id_list_merge_with_media(session, args, node_list):
                 ):
                     # media changed but the parent node did not change
                     add_to_node_list(node_list, media_of, media_changed)
+            page += 1
+
+
+#
+def get_changed_date(group_relationship):
+
+    group_changed_on = group_relationship.get("group_changed_on", None)
+    group_relationship_changed_on = group_relationship.get(
+        "group_relationship_changed_on", None
+    )
+
+    if not group_changed_on and group_relationship_changed_on:
+        return drupal_to_iso8601(group_relationship_changed_on)
+    elif group_changed_on and not group_relationship_changed_on:
+        return drupal_to_iso8601(group_changed_on)
+    elif group_changed_on >= group_relationship_changed_on:
+        return drupal_to_iso8601(group_changed_on)
+    elif group_changed_on <= group_relationship_changed_on:
+        return drupal_to_iso8601(group_relationship_changed_on)
+    else:
+        return None
+
+
+# query Drupal Groups as group changes are not reflected as node revisions
+# exclude Drupal Groups not attached to a Drupal Node
+def id_list_merge_with_drupal_groups(session, args, node_list):
+
+    page = 0
+    while True:
+        groups = drupalApi.get_drupal_groups_list(session, args.server, page, args.date)
+        groups_json = json.loads(groups.content)
+        logging.debug(
+            "Page %s of group content - count[%s] - %s",
+            page,
+            len(groups_json),
+            groups_json,
+        )
+
+        if len(groups_json) == 0:
+            # no more pages
+            break
+        else:
+            for group_relationship in groups_json:
+                node_id = None
+                if (
+                    "field_group_of" in group_relationship
+                    and len(group_relationship["field_group_of"]) >= 1
+                ):
+                    node_id = group_relationship["field_group_of"]
+
+                group_changed = get_changed_date(group_relationship)
+
+                if (
+                    node_id is not None
+                    and group_changed is not None
+                    and (
+                        node_id not in node_list
+                        or node_list[node_id]["changed"] < group_changed
+                    )
+                ):
+                    # group changed but the parent node did not change
+                    add_to_node_list(node_list, node_id, group_changed)
             page += 1
 
 
