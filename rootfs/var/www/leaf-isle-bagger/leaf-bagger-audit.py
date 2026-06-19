@@ -68,12 +68,18 @@ def process(args, session, output_file):
         f"Audit: Drupal nodes before media inclusion - length [{len(node_list)}] - details {node_list}"
     )
 
-    # inspect Drupal Media for changes
+    # Inspect Drupal Media for changes
     # a Media change is does not transitively change the associated Node change timestamp)
     # if Media changed then add associated Node ID to the list
     drupalUtilities.id_list_merge_with_media(session, args, node_list)
     logging.info(
         f"Audit: Drupal nodes with media changes - length [{len(node_list)}] - details {node_list}"
+    )
+
+    # Inspect Drupal Group relationship for changes
+    drupalUtilities.id_list_merge_with_drupal_groups(session, args, node_list)
+    logging.info(
+        f"Audit: Drupal nodes with group relationship changes - length [{len(node_list)}] - details {node_list}"
     )
 
     # audit archival information packages

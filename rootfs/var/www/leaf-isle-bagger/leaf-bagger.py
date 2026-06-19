@@ -91,16 +91,26 @@ def process(args, session):
             session, args.server, node_list, args.force_single_node
         )
         logging.info(f"AIP: Drupal node with media changes - {node_list}")
+        # Inspect Drupal Group relationship for changes
+        drupalUtilities.single_node_merge_with_drupal_groups(
+            session, args.server, node_list, args.force_single_node
+        )
+        logging.info(f"AIP: Drupal node with group relationship changes - {node_list}")
     else:
         # get a list of Drupal Node IDs changed since a given optional date
         # or a single node then force update
         node_list = drupalUtilities.id_list_from_nodes(session, args)
         logging.info(f"AIP: Drupal nodes before media inclusion - {node_list}")
+
         # inspect associated Drupal Media for changes
         # a Media change does not transitively update the associated Node change timestamp)
         # if Media changed but not the associated Node then add associated Node ID to the list
         drupalUtilities.id_list_merge_with_media(session, args, node_list)
         logging.info(f"AIP: Drupal nodes with media changes - {node_list}")
+
+        # inspect Drupal Group relationship for changes
+        drupalUtilities.id_list_merge_with_drupal_groups(session, args, node_list)
+        logging.info(f"AIP: Drupal nodes with group relationship changes - {node_list}")
 
     # create archival information packages
     logging.info("Create AIPs")
