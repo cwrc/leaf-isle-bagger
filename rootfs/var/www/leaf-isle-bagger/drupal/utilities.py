@@ -212,10 +212,10 @@ def id_list_merge_with_drupal_groups(session, args, node_list):
             for group_relationship in groups_json:
                 node_id = None
                 if (
-                    "field_group_of" in group_relationship
-                    and len(group_relationship["field_group_of"]) >= 1
+                    "node_id" in group_relationship
+                    and len(group_relationship["node_id"]) >= 1
                 ):
-                    node_id = group_relationship["field_group_of"]
+                    node_id = group_relationship["node_id"]
 
                 group_changed = get_changed_date(group_relationship)
 

@@ -233,7 +233,7 @@ def test_drupal_group_change(mocker):
         "GET",
         f"{args.server}/{drupalApi.group_view_endpoint(page='0', date_filter=args.date)}",
         text='[ { "group_changed_on": "1758126493", "group_relationship_changed_on": "1774280464",'
-        ' "field_group_of": "1" } ]',
+        ' "node_id": "1" } ]',
     )
     _adapter.register_uri(
         "GET",
