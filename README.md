@@ -234,6 +234,25 @@ for item in $tmp; do
 done
 ```
 
+To redo all item in revers order
+
+``` bash
+#
+tmp=$(cut -d',' -f 1 _leaf_bagger_audit_2026-07-17T_21-14-52.csv | tac | head | tr '\n' ' ')
+for item in $tmp; do
+    ./venv/bin/python3 leaf-bagger.py \
+      --server ${BAGGER_DRUPAL_URL} \
+      --output /tmp/force_single_node_${item}_$(date +"%Y-%m-%dT_%H-%M-%S").csv \
+      --container ${OS_CONTAINER} \
+      --error_log /tmp/error-$(date +"%Y-%m-%dT_%H-%M-%S").log \
+      --force_single_node ${item} \
+      ;
+done
+```
+
+
+
+
 Test Swift cli
 
 ``` bash

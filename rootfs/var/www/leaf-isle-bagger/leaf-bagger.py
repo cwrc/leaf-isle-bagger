@@ -92,7 +92,7 @@ def process(args, session):
         )
         logging.info(f"AIP: Drupal node with media changes - {node_list}")
         # Inspect Drupal Group relationship for changes
-        drupalUtilities.single_node_merge_with_drupal_groups(
+        drupalUtilities.single_node_merge_with_drupal_group(
             session, args.server, node_list, args.force_single_node
         )
         logging.info(f"AIP: Drupal node with group relationship changes - {node_list}")
