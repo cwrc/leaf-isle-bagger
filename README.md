@@ -46,6 +46,7 @@ The Dockerfile in this repository describes the requirements and setup. An overv
 * An instance of [Islandora-Bagger CLI](https://github.com/mjordan/islandora_bagger) via [isle-bagger](https://github.com/cwrc/isle-bagger) or an equivalent setup
   * directory of to store generated AIPs (long-term for auditing)
   * [jwtonlogin] (to add the user's JWT token to the response of a successful login)
+  * Drupal filehash module with sha256 for all media to verify download integrity
   * See [isle-bagger] for details
 * A shell with OpenStack Swift environment variables
 * PHP 8.3+ for Islandora-Bagger
