@@ -31,10 +31,12 @@ jobs:
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          older-than: 7 days
+          # Target all tags so age and exclusion rules apply
+          delete-tags: '.*'
           # Exclude SemVer releases and 'latest' so Step 1 only touches branch/feature tags
           exclude-tags: '^latest$|^v?\d+\.\d+\.\d+$|^v?\d+\.\d+$|^v?\d+$'
           use-regex: true
+          older-than: 7 days
           delete-untagged: true
           dry-run: false 
 
