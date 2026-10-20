@@ -53,6 +53,12 @@ def parse_args():
         help="Path to the Bag creation tool.",
         default=f"{os.getenv('BAGGER_OUTPUT_DIR')}",
     )
+    parser.add_argument(
+        "--force_single_node",
+        required=False,
+        help="Override node selection and process only the specified item.",
+        default="",
+    )
     return parser.parse_args()
 
 
@@ -71,13 +77,23 @@ def process(args, session, output_file):
     # Inspect Drupal Media for changes
     # a Media change is does not transitively change the associated Node change timestamp)
     # if Media changed then add associated Node ID to the list
-    drupalUtilities.id_list_merge_with_media(session, args, node_list)
+    if args.force_single_node:
+        drupalUtilities.single_node_merge_with_media(
+            session, args.server, node_list, args.force_single_node
+        )
+    else:
+        drupalUtilities.id_list_merge_with_media(session, args, node_list)
     logging.info(
         f"Audit: Drupal nodes with media changes - length [{len(node_list)}] - details {node_list}"
     )
 
     # Inspect Drupal Group relationship for changes
-    drupalUtilities.id_list_merge_with_drupal_groups(session, args, node_list)
+    if args.force_single_node:
+        drupalUtilities.single_node_merge_with_drupal_group(
+            session, args.server, node_list, args.force_single_node
+        )
+    else:
+        drupalUtilities.id_list_merge_with_drupal_groups(session, args, node_list)
     logging.info(
         f"Audit: Drupal nodes with group relationship changes - length [{len(node_list)}] - details {node_list}"
     )
