@@ -25,17 +25,15 @@ def init_session(args, username, password):
 
 
 #
-def node_view_endpoint(page=0, date_filter=""):
-    return (
-        f"views/preservation/v2/show_node_timestamps?page={page}&changed={date_filter}"
-    )
+def node_view_endpoint(page=0, date_filter="", node_id=""):
+    return f"views/preservation/v2/show_node_timestamps?page={page}&changed={date_filter}&nid={node_id}"
 
 
 #
-def get_node_list(session, server, page=0, date_filter=""):
+def get_node_list(session, server, page=0, date_filter="", node_id=""):
 
     response = session.get(
-        urljoin(server, node_view_endpoint(page, date_filter)),
+        urljoin(server, node_view_endpoint(page, date_filter, node_id)),
         # allow_redirects=config["allow_redirects"],
         # verify=config["secure_ssl_only"],
         # auth=(config["username"], config["password"]),

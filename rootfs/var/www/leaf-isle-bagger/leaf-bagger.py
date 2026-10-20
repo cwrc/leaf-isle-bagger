@@ -82,7 +82,7 @@ def process(args, session):
 
     # get a list of Drupal Node IDs either from specified ID or via a list
     if args.force_single_node:
-        node_list = drupalUtilities.id_list_from_arg(session, args)
+        node_list = drupalUtilities.id_list_from_nodes(session, args)
         logging.info(f"AIP: Drupal node before media inclusion - {node_list}")
         # inspect associated Drupal Media for changes
         # a Media change does not transitively update the associated Node change timestamp
