@@ -43,8 +43,9 @@ def id_list_from_nodes(session, args):
 
     while True:
         force_single_node = getattr(args, "force_single_node", "")
+        date = getattr(args, "date", "")
         node = drupalApi.get_node_list(
-            session, args.server, page, args.date, force_single_node
+            session, args.server, page, date, force_single_node
         )
         node_json = json.loads(node.content)
         logging.debug(

@@ -26,7 +26,7 @@ def init_session(args, username, password):
 
 #
 def node_view_endpoint(page=0, date_filter="", node_id=""):
-    return f"views/preservation/v2/show_node_timestamps?page={page}&changed={date_filter}?nid={node_id}"
+    return f"views/preservation/v2/show_node_timestamps?page={page}&changed={date_filter}&nid={node_id}"
 
 
 #
