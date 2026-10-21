@@ -25,10 +25,7 @@ def parse_args():
         "--output", required=True, help="Location to store JSON (like) output file."
     )
     parser.add_argument(
-        "--date",
-        required=False,
-        help="Items changed after the given date."
-        default=""
+        "--date", required=False, help="Items changed after the given date.", default=""
     )
     parser.add_argument(
         "--container",
