@@ -156,8 +156,8 @@ def file_checksum(path):
                 hash_sha256.update(chunk)
     except FileNotFoundError as e:
         logging.error(f"{e}")
-    finally:
-        return {"md5sum": hash_md5.hexdigest(), "sha256sum": hash_sha256.hexdigest()}
+    
+    return {"md5sum": hash_md5.hexdigest(), "sha256sum": hash_sha256.hexdigest()}
 
 
 #
